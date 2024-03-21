@@ -11,8 +11,8 @@ local HoneyBadger = setmetatable({
 HoneyBadger.__index = HoneyBadger
 HoneyBadger.ToolName = "HoneyBadger"
 
-function HoneyBadger.new(new)
-	return setmetatable(GunClass.new(new), HoneyBadger)
+function HoneyBadger.new()
+	return setmetatable(GunClass.new({}), HoneyBadger)
 end
 
 return HoneyBadger
