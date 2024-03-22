@@ -1,3 +1,0 @@
-local Tools = {}
-
-return Tools
