@@ -12,7 +12,9 @@ HoneyBadger.__index = HoneyBadger
 HoneyBadger.ToolName = "HoneyBadger"
 
 function HoneyBadger.new()
-	return setmetatable(GunClass.new({}), HoneyBadger)
+	return setmetatable(GunClass.new({
+		
+	}), HoneyBadger)
 end
 
 return HoneyBadger
