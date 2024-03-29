@@ -19,36 +19,39 @@ ListMeta.__len = function(self)
 end
 local GlobalTools = setmetatable({}, ListMeta)
 
-local Tool = setmetatable({
-	
-}, PropertiesClass)
-
+local Tool = {
+	GlobalTools = GlobalTools,
+	__type = "Tool"
+}
 Tool.__index = Tool
-Tool.__type = "Tool"
-Tool.GlobalTools = GlobalTools
 
-function Tool.new(new)
+function Tool.new(config)
+	local new = setmetatable(PropertiesClass.new(config), Tool)
+
 	new.OnEquipped = Signal.new()
 	new.OnUnequipped = Signal.new()
-	
-	return setmetatable(PropertiesClass.new(new), Tool)
+
+	return new
 end
 
 function Tool:Create()
-	local ToolInstance = ReplicatedStorage.Tools:FindFirstChild(self.ToolName, true).Tool:Clone()
-	ToolInstance.Name = self.ToolName
-	
+	local toolFolder = ReplicatedStorage.Tools:FindFirstChild(self.ToolName, true)
+	assert(toolFolder, string.format("'%s' is not a valid ToolName"))
+	local toolClone = toolFolder.Tool:Clone()
+
+	toolClone.Name = self.Name
+
 	if self.Player then
 		self:SetPlayer(self.Player)
 	end
-	
-	self.Instance = ToolInstance
+
+	self.Instance = toolClone
 	GlobalTools[self.Instance] = self
 	GlobalTools.OnToolAdded:Fire(self)
 
-	ToolInstance.Server.Enabled = true
-	
-	return ToolInstance
+	toolClone.Server.Enabled = true
+
+	return toolClone
 end
 
 function Tool:Destroy()
@@ -59,21 +62,28 @@ end
 
 function Tool:SetPlayer(player)
 	self.Player = player
-	
-	if self.Instance then
-		self.Instance.Remotes.ReplicateObject:FireClient(player, self)
-	end
-	
-	if self.Parent ~= player.Backpack and self.Parent ~= player.Character then
-		self.Parent = player.Backpack
+
+	if player then
+		if self.Instance then
+			self.Instance.Remotes.ReplicateObject:FireClient(player, self)
+		end
+
+		if self.Instance.Parent ~= player.Backpack and self.Instance.Parent ~= player.Character then
+			self.Instance.Parent = player.Backpack
+		end
+	else
+		self.Instance.Parent = nil
 	end
 end
 
 function Tool:Equip()
 	if self.Equipped then return end
-
 	self.Instance.Parent = self.Character
 	self.Equipped = true
+
+	local equipAnim = self.Player.Character:LoadAnimation(self.Instance.Animations.EquipAnimation)
+	self.CurrentAnim = equipAnim
+	equipAnim:Play()
 end
 
 function Tool:Unequip()

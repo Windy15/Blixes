@@ -3,14 +3,13 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Signal = require(ReplicatedStorage.Modules.General.GoodSignal)
 
 local Properties = {}
-
 Properties.__index = Properties
 
 function Properties.new(new)
 	new = new or {}
 	
 	new.PropertyChanged = Signal.new()
-	new.Modifiers = {
+	new.StatModifiers = {
 		Multipliers = {},
 		Adders = {}
 	}
@@ -23,7 +22,7 @@ function Properties:GetModified(index)
 	
 	if not value then return nil end
 	
-	local modifiers = self.Modifiers
+	local modifiers = self.StatModifiers
 	
 	local multipliers = modifiers.Multipliers[index]
 	
@@ -45,8 +44,9 @@ function Properties:GetModified(index)
 end
 
 function Properties:SetValue(index, value)
+	local oldValue = self[index]
 	self[index] = value
-	self.Signals.Changed:Fire(index, value)
+	self.PropertyChanged:Fire(index, value, oldValue)
 end
 
 return Properties
