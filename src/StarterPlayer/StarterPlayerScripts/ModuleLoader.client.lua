@@ -2,12 +2,20 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterPlayer = game:GetService("StarterPlayer")
 local ClientScripts = StarterPlayer.StarterPlayerScripts
 
-local Modules = ReplicatedStorage.Modules
+local function requireModules(folder)
+	for _, module in ipairs(folder:GetDescendants()) do
+		if module:IsA("ModuleScript") then
+			require(module)
+		end
+	end
+end
 
-require(Modules.Players.Characters)
+local LoadModuleFolders = {
+    ReplicatedStorage.Modules,
+    ClientScripts.RenderHandlers,
+    ReplicatedStorage.ToolClasses
+}
 
-local renders = ClientScripts.RenderHandlers:GetChildren()
-
-for _, handler in ipairs(renders) do
-    require(handler)
+for _, folder in ipairs(LoadModuleFolders) do
+    requireModules(folder)
 end

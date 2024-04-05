@@ -2,7 +2,7 @@ local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
-local Signal = require(ReplicatedStorage.Modules.General.GoodSignal)
+local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
 local RAY_CAST_NAME = "Line"
 local SPHERE_CAST_NAME = "Sphere"

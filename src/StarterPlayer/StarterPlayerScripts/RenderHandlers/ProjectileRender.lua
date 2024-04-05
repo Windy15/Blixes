@@ -8,7 +8,7 @@ local RemoveProjectile = Remotes.RemoveProjectile
 
 local ProjectileRenders = {}
 
-CreateProjectile.OnClientEvent:Connect(function(activeCastid, projectileFolder)
+function ProjectileRenders.createProjectile(activeCastid, projectileFolder)
     ProjectileRenders[activeCastid] = projectileFolder.Render:Clone()
 
     local visualEffect = projectileFolder:FindFirstChild("VisualEffect")
@@ -16,18 +16,22 @@ CreateProjectile.OnClientEvent:Connect(function(activeCastid, projectileFolder)
     if visualEffect then
         task.spawn(visualEffect, projectileFolder)
     end
-end)
+end
 
-UpdatePosition.OnClientEvent:Connect(function(activeCastid, cframe) -- fire FastCast data to clients so they can mimic the hitbox's movements
+function ProjectileRenders.updatePosition(activeCastid, cframe)
     local render =  ProjectileRenders[activeCastid]
     if not render then return end
     render:SetPivot(cframe)
-end)
+end
 
-RemoveProjectile.OnClientEvent:Connect(function(id)
-    if ProjectileRenders[id] then
-        ProjectileRenders[id] = nil
+function ProjectileRenders.removeProjectile(activeCastid)
+    if ProjectileRenders[activeCastid] then
+        ProjectileRenders[activeCastid] = nil
     end
-end)
+end
+
+CreateProjectile.OnClientEvent:Connect(ProjectileRenders.createProjectile)
+UpdatePosition.OnClientEvent:Connect(ProjectileRenders.updatePosition)-- fire FastCast data to clients so they can mimic the hitbox's movements
+RemoveProjectile.OnClientEvent:Connect(ProjectileRenders.removeProjectile)
 
 return ProjectileRenders

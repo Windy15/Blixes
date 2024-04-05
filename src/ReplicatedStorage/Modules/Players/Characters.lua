@@ -2,7 +2,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local CharacterClass = require(ReplicatedStorage.Modules.Players.CharacterClass)
-local Signal = require(ReplicatedStorage.Modules.General.GoodSignal)
+local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
 local CharMethods = {
 	PlayerLoaded = Signal.new(),

@@ -13,8 +13,15 @@ local function requireModules(folder)
 	end
 end
 
+local LoadModuleFolders = {
+	ReplicatedStorage.Modules,
+	ServerScriptService.ToolClasses,
+}
+
 if ServerSettings.AntiCheat then
 	requireModules(AntiCheatFolder)
 end
 
-requireModules(ReplicatedStorage)
+for _, folder in ipairs(LoadModuleFolders) do
+	requireModules(folder)
+end

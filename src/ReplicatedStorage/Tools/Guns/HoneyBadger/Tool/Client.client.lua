@@ -8,7 +8,7 @@ local animator = char:WaitForChild("Animator")
 local tool = script.Parent
 local Remotes = tool:WaitForChild("Remotes")
 
-local Gun = require(ReplicatedStorage.Tools.Guns.HoneyBadgerClass).new (
+local Gun = require(ReplicatedStorage.ToolClasses.Guns.HoneyBadger).new (
 	Remotes.ReplicateObject.OnClientEvent:Wait()
 )
 

@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local PropertiesClass = require(ReplicatedStorage.Modules.General.PropertiesClass)
-local Signal = require(ReplicatedStorage.Modules.General.GoodSignal)
+local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
 local ListMeta = {
 	OnToolAdded = Signal.new(),
@@ -36,7 +36,7 @@ end
 
 function Tool:Create()
 	local toolFolder = ReplicatedStorage.Tools:FindFirstChild(self.ToolName, true)
-	assert(toolFolder, string.format("'%s' is not a valid ToolName"))
+	assert(toolFolder, string.format("'%s' is not a valid ToolName", self.ToolName))
 	local toolClone = toolFolder.Tool:Clone()
 
 	toolClone.Name = self.Name
@@ -74,23 +74,6 @@ function Tool:SetPlayer(player)
 	else
 		self.Instance.Parent = nil
 	end
-end
-
-function Tool:Equip()
-	if self.Equipped then return end
-	self.Instance.Parent = self.Character
-	self.Equipped = true
-
-	local equipAnim = self.Player.Character:LoadAnimation(self.Instance.Animations.EquipAnimation)
-	self.CurrentAnim = equipAnim
-	equipAnim:Play()
-end
-
-function Tool:Unequip()
-	if not self.Equipped then return end
-
-	self.Instance.Parent = self.Player.Backpack
-	self.Equipped = false
 end
 
 return Tool
