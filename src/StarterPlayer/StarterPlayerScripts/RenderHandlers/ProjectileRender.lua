@@ -1,10 +1,10 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Remotes = ReplicatedStorage.Remotes.Projectile
+local ProjectileRemotes = ReplicatedStorage.Remotes.Projectiles
 
-local CreateProjectile = Remotes.CreateProjectile
-local UpdatePosition = Remotes.UpdatePosition
-local RemoveProjectile = Remotes.RemoveProjectile
+local CreateProjectile = ProjectileRemotes.CreateProjectile
+local UpdatePosition = ProjectileRemotes.UpdatePosition
+local RemoveProjectile = ProjectileRemotes.RemoveProjectile
 
 local ProjectileRenders = {}
 

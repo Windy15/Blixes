@@ -11,6 +11,7 @@ local UpdatePosition = ReplicatedStorage.Remotes.Projectiles.UpdatePosition
 local RemoveProjectile = ReplicatedStorage.Remotes.Projectiles.RemoveProjectile
 
 local ToolClass = require(ServerScriptService.ToolClasses.ToolClass)
+local Characters = require(ReplicatedStorage.Players.Characters)
 
 local Gun = {
 	ToolType = "Gun"
@@ -28,17 +29,31 @@ function Gun.new(config)
 
 	new.BulletVelocity = config.BulletVelocity or 100
 
-	new.Casters = config.Casters or {
-		Bullet = FastCast.new()
+	new.Projectiles = config.Projectiles or {
+		Bullet = {
+			Caster = FastCast.new(),
+			HitConnection = nil
+		}
 	}
-	new.CurrentCaster = config.CurrentCaster or "Bullet"
 	new._ActiveCastIds = {}
+
+	if new.Projectiles.Bullet then
+		new.Projectiles.Bullet.HitConnection = new.Projectiles.Bullet.Caster.RayHit:Connect(function(activeCast, result)
+			activeCast:Terminate()
+			local char = Characters:GetCharFromInstance(result.Instance)
+			if not char then return end
+
+			char:TakeDamage(new.Damage)
+		end)
+	end
 
 	new.OnShot = Signal.new()
 	new.OnReloading = Signal.new()
 	new.OnModeChanged = Signal.new()
 
-	for name, caster in pairs(new.Casters) do
+	for name, projectile in pairs(new.Projectiles) do
+		local caster = projectile.Caster
+
 		local activeCastIds = {}
 		new._ActiveCastIds[name] = activeCastIds
 
@@ -64,19 +79,24 @@ function Gun.new(config)
 	return new
 end
 
-function Gun:Shoot(origin, direction, castBehvaiour)
-	local caster = self.Casters[self.CurrentCaster]
-	local activeCast = caster:Fire(origin, direction, self.BulletVelocity, castBehvaiour)
-
+function Gun:FireCast(caster, ...)
+	local activeCast = caster:Fire(...)
 	local activeCastId = HttpService:GenerateGUID()
 	self._ActiveCastIds.Bullet[activeCast] = {
 		id = activeCastId,
 		player = self.Player
 	}
 
+	return caster, activeCastId
+end
+
+function Gun:Shoot(projectileName, origin, direction, castBehvaiour)
+	local projectile = self.Projectiles[projectileName]
+	local activeCast, activeCastId = self:FireCast(projectile.Caster, origin, direction, self.BulletVelocity, castBehvaiour)
+
 	for _, player in ipairs(Players:GetPlayers()) do
 		if player ~= self.Player then
-			CreateProjectile:FireClient(activeCastId, ReplicatedStorage.Projectiles[self.CurrentCaster])
+			CreateProjectile:FireClient(activeCastId, ReplicatedStorage.Projectiles[projectileName])
 		end
 	end
 end

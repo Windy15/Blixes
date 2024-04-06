@@ -1,7 +1,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local CharacterClass = require(ReplicatedStorage.Modules.Players.CharacterClass)
+local CharacterClass = require(ReplicatedStorage.Players.CharacterClass)
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
 local CharMethods = {
@@ -19,6 +19,14 @@ CharMethods.__len = function(t)
 	end
 
 	return totalChars
+end
+
+function CharMethods:GetCharFromInstance(instance, descendantsCheck)
+	for _, char in pairs(self) do
+		if descendantsCheck and instance:IsDescendantOf(char) or instance.Parent == char then
+			return char
+		end
+	end
 end
 
 local Characters = setmetatable({}, CharMethods)

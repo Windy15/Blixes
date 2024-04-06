@@ -6,7 +6,7 @@ local FastCast = require(ReplicatedStorage.Modules.Collisions.FastCastRedux)
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
 local player = Players.LocalPlayer
-local ProjectileRender = require(player.RenderHandlers.ProjectileRender)
+local ProjectileRender = require(player.PlayerScripts.RenderHandlers.ProjectileRender)
 
 local ToolClass = require(ReplicatedStorage.ToolClasses.ToolClass)
 
@@ -21,22 +21,30 @@ function Gun.new(config)
 	new.FireRate = config.Damage or 1
 	new.ReloadTime = 3
 
-	new.CurrentMode = config.CurrentMode or 1
 	new.FiringModes = config.FiringModes or {"Semi"}
+	new.CurrentMode = config.CurrentMode or new.FiringModes[1]
 
 	new.BulletVelocity = config.BulletVelocity or 100
 
-	new.Casters = config.Casters or {
-		Bullet = FastCast.new()
+	new.Projectiles = config.Projectiles or {
+		Bullet = {
+			Caster = FastCast.new()
+		}
 	}
-	new.CurrentCaster = config.CurrentCaster or "Bullet"
+	new.CurrentProjectile = config.CurrentProjectile or "Bullet"
 	new._ActiveCastIds = {}
+
+	for name in pairs(new.Projectiles) do
+		new._ActiveCastIds[name] = {}
+	end
 
 	new.OnShot = Signal.new()
 	new.OnReloading = Signal.new()
 	new.OnModeChanged = Signal.new()
 
-	for name, caster in pairs(new.Casters) do
+	for name, projectile in pairs(new.Projectiles) do
+		local caster = projectile.Caster
+
 		local activeCastIds = {}
 		new._ActiveCastIds[name] = activeCastIds
 
@@ -53,14 +61,19 @@ function Gun.new(config)
 	return new
 end
 
-function Gun:Shoot(origin, direction, castBehvaiour)
-	local caster = self.Casters[self.CurrentCaster]
-	local activeCast = caster:Fire(origin, direction, self.BulletVelocity, castBehvaiour)
-
+function Gun:FireCast(caster, ...)
+	local activeCast = caster:Fire(...)
 	local activeCastId = HttpService:GenerateGUID()
 	self._ActiveCastIds.Bullet[activeCast] = activeCastId
 
-	ProjectileRender.createProjectile(activeCastId, ReplicatedStorage.Projectiles[self.CurrentCaster])
+	return caster, activeCastId
+end
+
+function Gun:Shoot(projectileName, origin, direction, castBehvaiour)
+	local projectile = self.Projectiles[projectileName]
+	local activeCast, activeCastId = self:FireCast(projectile.Caster, origin, direction, self.BulletVelocity, castBehvaiour)
+
+	ProjectileRender.createProjectile(activeCastId, ReplicatedStorage.Projectiles[projectileName])
 end
 
 function Gun:Reload()

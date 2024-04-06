@@ -1,6 +1,6 @@
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local StarterPlayer = game:GetService("StarterPlayer")
-local ClientScripts = StarterPlayer.StarterPlayerScripts
+local ClientScripts = Players.LocalPlayer.PlayerScripts
 
 local function requireModules(folder)
 	for _, module in ipairs(folder:GetDescendants()) do
@@ -12,7 +12,7 @@ end
 
 local LoadModuleFolders = {
     ReplicatedStorage.Modules,
-    ClientScripts.RenderHandlers,
+    ClientScripts:WaitForChild("RenderHandlers"),
     ReplicatedStorage.ToolClasses
 }
 

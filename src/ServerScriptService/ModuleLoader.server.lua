@@ -15,6 +15,7 @@ end
 
 local LoadModuleFolders = {
 	ReplicatedStorage.Modules,
+	ReplicatedStorage.Players,
 	ServerScriptService.ToolClasses,
 }
 
