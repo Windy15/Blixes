@@ -11,7 +11,7 @@ local UpdatePosition = ReplicatedStorage.Remotes.Projectiles.UpdatePosition
 local RemoveProjectile = ReplicatedStorage.Remotes.Projectiles.RemoveProjectile
 
 local ToolClass = require(ServerScriptService.ToolClasses.ToolClass)
-local Characters = require(ReplicatedStorage.Players.Characters)
+local Characters = require(ReplicatedStorage.Entities.Player.Characters)
 
 local Gun = {
 	ToolType = "Gun"

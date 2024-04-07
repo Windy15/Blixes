@@ -13,6 +13,7 @@ end
 local LoadModuleFolders = {
     ReplicatedStorage.Modules,
     ClientScripts:WaitForChild("RenderHandlers"),
+	ReplicatedStorage.Entities,
     ReplicatedStorage.ToolClasses
 }
 
