@@ -8,13 +8,15 @@ type SignalImpl = {
 	_YieldList: table?,
 
 	new: () -> Signal,
-	Connect: (self: Signal, fun: (any) -> (any)) -> (),
-	Once: (self: Signal, fun: (any) -> (any)) -> (),
-	Wait: (resumeTime: number?) -> (any),
-	Fire: (...any) -> ()
+	Connect: (self: Signal, fun: (...any) -> ()) -> (),
+	Once: (self: Signal, fun: (...any) -> ()) -> (),
+	Wait: (self: Signal, resumeTime: number?) -> (...any),
+	Fire: (...any) -> (),
+	Clear: (self: Signal) -> (),
+	Destroy: (self: Signal) -> ()
 }
 
-type Signal = typeof(setmetatable({} :: {
+export type Signal = typeof(setmetatable({} :: {
 	_ConnectionList: table?,
 	_YieldList: table?,
 }, {} :: SignalImpl))
@@ -71,7 +73,7 @@ function Signal.new(): Signal
 	}, Signal)
 end
 
-function Signal:Connect(fun: (...any) -> (...any))
+function Signal:Connect(fun: (...any) -> ())
 	local _connection = Connection.new(self, fun)
 
 	if self._ConnectionList then
@@ -84,7 +86,7 @@ function Signal:Connect(fun: (...any) -> (...any))
 	return _connection
 end
 
-function Signal:Wait(resumeTime: number?): ...any
+function Signal:Wait(resumeTime: number?)
 	local Yield = Connection.new(self, coroutine.running())
 
 	if self._YieldList then
@@ -118,7 +120,7 @@ function Signal:Wait(resumeTime: number?): ...any
 	return coroutine.yield(Yield._Thread)
 end
 
-function Signal:Once(fun: (...any) -> (...any))
+function Signal:Once(fun: (...any) -> ())
 	local _connection = Connection.new(self, fun)
 
 	if self._ConnectionList then
