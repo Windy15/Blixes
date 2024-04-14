@@ -3,15 +3,15 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
+local Characters = require(ReplicatedStorage.Entities.Players.Characters)
 local FastCast = require(ReplicatedStorage.Modules.Collisions.FastCastRedux)
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
+local StringUtils = require(ReplicatedStorage.Modules.General.StringUtils)
+local ToolClass = require(ServerScriptService.ToolClasses.ToolClass)
 
 local CreateProjectile = ReplicatedStorage.Remotes.Projectiles.CreateProjectile
 local UpdatePosition = ReplicatedStorage.Remotes.Projectiles.UpdatePosition
 local RemoveProjectile = ReplicatedStorage.Remotes.Projectiles.RemoveProjectile
-
-local ToolClass = require(ServerScriptService.ToolClasses.ToolClass)
-local Characters = require(ReplicatedStorage.Entities.Players.Characters)
 
 local Gun = {
 	ToolType = "Gun"
@@ -110,14 +110,10 @@ function Gun:Reload()
 	end)
 end
 
-function Gun:SetAiming(aiming)
-	self:SetValue("Aiming", aiming)
-end
-
 function Gun:ChangeMode(firingMode)
 	assert (
 		table.find(self.FiringModes, firingMode),
-		string.format("'%s' is not a valid firing mode for Gun: %s", firingMode, string.match(tostring(self), "0x.+"))
+		string.format("'%s' is not a valid firing mode for %s", firingMode, StringUtils.formatAddress(self, "Gun"))
 	)
 	self.CurrentMode = firingMode
 	self.OnModeChanged:Fire(firingMode)

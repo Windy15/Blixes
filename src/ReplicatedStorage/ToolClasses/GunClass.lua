@@ -4,6 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local FastCast = require(ReplicatedStorage.Modules.Collisions.FastCastRedux)
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
+local StringUtils = require(ReplicatedStorage.Modules.General.StringUtils)
 
 local player = Players.LocalPlayer
 local ProjectileRender = require(player.PlayerScripts.RenderHandlers.ProjectileRender)
@@ -97,7 +98,7 @@ function Gun:ChangeMode(firingMode)
 
 	assert (
 		table.find(self.FiringModes, firingMode),
-		string.format("'%s' is not a valid firing mode for Gun: %s", firingMode, string.match(tostring(self), "0x.+"))
+		string.format("'%s' is not a valid firing mode for %s", firingMode, StringUtils.formatAddress(self, "Gun"))
 	)
 	self.CurrentMode = firingMode
 	self.OnModeChanged:Fire(firingMode)
