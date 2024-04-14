@@ -1,0 +1,3 @@
+local DataHandler = {}
+
+return DataHandler

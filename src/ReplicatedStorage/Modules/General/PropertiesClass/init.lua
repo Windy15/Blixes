@@ -21,8 +21,8 @@ function Properties:GetModified(index)
 
 	assert(self.StatModifiers[index], "Index '"..index.."' is not a stat for this table")
 
-    local muls = {}
-    local funcs = {}
+    local muls = table.create(#self.StatModifiers[index])
+    local funcs = table.create(#self.StatModifiers[index])
 
 	for _, modifier in ipairs(self.StatModifiers[index]) do
 		if modifier.Adder then

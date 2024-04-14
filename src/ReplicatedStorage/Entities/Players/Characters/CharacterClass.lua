@@ -11,7 +11,7 @@ function Character.new(player)
 end
 
 function Character:TakeDamage(dmg)
-    self.Instance.Humanoid.Health -= dmg
+    self.Instance.Humanoid:TakeDamage(math.clamp(dmg, 0, math.huge))
 end
 
 return Character

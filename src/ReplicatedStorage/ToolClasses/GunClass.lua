@@ -61,19 +61,18 @@ function Gun.new(config)
 	return new
 end
 
-function Gun:FireCast(caster, ...)
-	local activeCast = caster:Fire(...)
+function Gun:FireProjectile(projectileName, ...)
+	local activeCast = self.Projectiles[projectileName].Caster:Fire(...)
 	local activeCastId = HttpService:GenerateGUID()
 	self._ActiveCastIds.Bullet[activeCast] = activeCastId
 
-	return caster, activeCastId
+	ProjectileRender.createProjectile(activeCastId, ReplicatedStorage.Projectiles[projectileName])
+
+	return activeCast, activeCastId
 end
 
 function Gun:Shoot(projectileName, origin, direction, castBehvaiour)
-	local projectile = self.Projectiles[projectileName]
-	local activeCast, activeCastId = self:FireCast(projectile.Caster, origin, direction, self.BulletVelocity, castBehvaiour)
-
-	ProjectileRender.createProjectile(activeCastId, ReplicatedStorage.Projectiles[projectileName])
+	local activeCast, activeCastId = self:FireProjectile(projectileName, origin, direction, self.BulletVelocity, castBehvaiour)
 end
 
 function Gun:Reload()

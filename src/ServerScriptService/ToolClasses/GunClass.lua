@@ -11,7 +11,7 @@ local UpdatePosition = ReplicatedStorage.Remotes.Projectiles.UpdatePosition
 local RemoveProjectile = ReplicatedStorage.Remotes.Projectiles.RemoveProjectile
 
 local ToolClass = require(ServerScriptService.ToolClasses.ToolClass)
-local Characters = require(ReplicatedStorage.Entities.Player.Characters)
+local Characters = require(ReplicatedStorage.Entities.Players.Characters)
 
 local Gun = {
 	ToolType = "Gun"
@@ -79,26 +79,26 @@ function Gun.new(config)
 	return new
 end
 
-function Gun:FireCast(caster, ...)
-	local activeCast = caster:Fire(...)
+function Gun:FireProjectile(projectileName, ...)
+	local activeCast = self.Projectiles[projectileName].Caster:Fire(...)
 	local activeCastId = HttpService:GenerateGUID()
 	self._ActiveCastIds.Bullet[activeCast] = {
 		id = activeCastId,
 		player = self.Player
 	}
 
-	return caster, activeCastId
-end
-
-function Gun:Shoot(projectileName, origin, direction, castBehvaiour)
-	local projectile = self.Projectiles[projectileName]
-	local activeCast, activeCastId = self:FireCast(projectile.Caster, origin, direction, self.BulletVelocity, castBehvaiour)
-
 	for _, player in ipairs(Players:GetPlayers()) do
 		if player ~= self.Player then
 			CreateProjectile:FireClient(activeCastId, ReplicatedStorage.Projectiles[projectileName])
 		end
 	end
+
+	return activeCast, activeCastId
+end
+
+function Gun:Shoot(projectileName, origin, direction, castBehvaiour)
+	local projectile = self.Projectiles[projectileName]
+	local activeCast, activeCastId = self:FireProjectile(projectile.Caster, origin, direction, self.BulletVelocity, castBehvaiour)
 end
 
 function Gun:Reload()
