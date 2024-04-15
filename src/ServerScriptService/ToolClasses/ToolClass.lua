@@ -1,26 +1,14 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local ListClass = require(ReplicatedStorage.Modules.General.ListClass)
 local PropertiesClass = require(ReplicatedStorage.Modules.General.PropertiesClass)
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
-local ListMeta = {
-	OnToolAdded = Signal.new(),
-	OnToolRemoved = Signal.new()
-}
-ListMeta.__index = ListMeta
-ListMeta.__len = function(self)
-    local total = 0
-
-    for _ in pairs(self) do
-        total += 1
-    end
-
-    return total
-end
-local GlobalTools = setmetatable({}, ListMeta)
-
 local Tool = {
-	GlobalTools = GlobalTools,
+	GlobalTools = ListClass.new({}, {
+		OnToolAdded = Signal.new(),
+		OnToolRemoved = Signal.new()
+	}),
 	__type = "Tool"
 }
 Tool.__index = Tool
@@ -46,8 +34,8 @@ function Tool:Create()
 	end
 
 	self.Instance = toolClone
-	GlobalTools[self.Instance] = self
-	GlobalTools.OnToolAdded:Fire(self)
+	Tool.GlobalTools[self.Instance] = self
+	Tool.GlobalTools.OnToolAdded:Fire(self)
 
 	toolClone.Server.Enabled = true
 
@@ -56,8 +44,8 @@ end
 
 function Tool:Destroy()
 	if self.Instance then self.Instance:Destroy() end
-	GlobalTools[self.Instance] = nil
-	GlobalTools.OnToolRemoved:Fire(self)
+	Tool.GlobalTools[self.Instance] = nil
+	Tool.GlobalTools.OnToolRemoved:Fire(self)
 end
 
 function Tool:SetPlayer(player)

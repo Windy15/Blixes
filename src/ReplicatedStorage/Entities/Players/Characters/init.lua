@@ -2,15 +2,15 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local CharacterClass = require(script.CharacterClass)
+local ListClass = require(ReplicatedStorage.Modules.General.ListClass)
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
-local MetaData = {
+local CharMethods = {
 	CharacterAdded = Signal.new(),
 	CharacterRemoved = Signal.new()
 }
-MetaData.__index = MetaData
 
-local Characters = setmetatable({}, MetaData)
+local Characters = ListClass.new({}, CharMethods)
 
 Players.PlayerAdded:Connect(function(player)
 	player.CharacterAdded:Connect(function()
@@ -26,7 +26,7 @@ Players.PlayerAdded:Connect(function(player)
 	end)
 end)
 
-function MetaData:GetCharFromInstance(instance, shallow)
+function CharMethods:GetCharFromInstance(instance, shallow)
 	if shallow then
 		for _, char in ipairs(self) do
 			if instance:IsDescendantOf(char) then
