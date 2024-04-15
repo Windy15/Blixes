@@ -8,6 +8,7 @@ local MetaData = {
 	CharacterAdded = Signal.new(),
 	CharacterRemoved = Signal.new()
 }
+MetaData.__index = MetaData
 
 local Characters = setmetatable({}, MetaData)
 
