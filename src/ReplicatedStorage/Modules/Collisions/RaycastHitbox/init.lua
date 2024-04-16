@@ -8,24 +8,23 @@ local RAY_CAST_NAME = "Line"
 local SPHERE_CAST_NAME = "Sphere"
 local BLOCK_CAST_NAME = "Block"
 
-local RaycastHitbox = {
-	Model = nil,
-	RaycastParams = RaycastParams.new(),
-	RayPointName = nil, -- Name of the attachments that will be a part of the hitbox (optional)
-
-	Visualize = false, -- Debug visualizer
-	RaycastOnShapecast = true, -- Whether to raycast normally for every shapecast to deal with the shapecast limitations
-	UpdateAttachments = false, -- If properties or attributes of attachments updating should be taken into account (slower)
-	ShallowAttachments = false, -- Whether to only get children and not descendents of "Model"
-
-	BlockCastFaceDirection = true, -- If BlockCasting faces the direction it goes
-}
+local RaycastHitbox = {}
 RaycastHitbox.__index = RaycastHitbox
 
-function RaycastHitbox.new(model, rayParams)
+function RaycastHitbox.new(model, rayParams, hitOnce, humanoidOnly)
 	local new = setmetatable({
 		Model = model,
-		RaycastParams = rayParams,
+		RaycastParams = rayParams or RaycastParams.new(),
+		RayPointName = nil, -- Name of the attachments that will be a part of the hitbox (optional)
+		HitOnce = hitOnce, Hits = {}, -- If the OnHit should only fire a hit for each part once, and the table which contains already hit parts
+		HumanoidOnly = humanoidOnly, -- Only fires OnHit when in contact with a part whos model ancestor has a humanoid
+
+		Visualize = false, -- Debug visualizer
+		RaycastOnShapecast = true, -- Whether to raycast normally for every shapecast to deal with the shapecast limitations
+		UpdateAttachments = false, -- If properties or attributes of attachments updating should be taken into account (slower)
+		ShallowAttachments = false, -- Whether to only get children and not descendents of "Model"
+
+		BlockCastFaceDirection = true, -- If BlockCasting faces the direction it goes
 
 		OnHit = Signal.new()
 	}, RaycastHitbox)
@@ -47,26 +46,16 @@ local function CreateAdornment(pos, lastPos)
 	Debris:AddItem(adornment, 3)
 end
 
-function RaycastHitbox:StartHit(model)
+function RaycastHitbox:StartHit()
 	assert(self.Model, "RaycastHitbox object must have a \"Model\" before :StartHit()")
-
 	if self._HitConnection then return end
 
-	local Model = self.Model
-	local RayParams = self.RaycastParams
-	local Visualize = self.Visualize
-	local RaycastOnShapecast = self.RaycastOnShapecast
-	local BlockCastFaceDirection = self.BlockCastFaceDirection
-
-	local OnHit = self.OnHit
-
 	local RayPointsTable = {}
-
+	local Hits = {}
 	local attachments = self.ShallowAttachments and self.Model:GetChildren() or self.Model:GetDescendants()
 
 	for _, att in ipairs(attachments) do
 		local rayPointType = att:GetAttribute("RayPointType")
-
 		if self.RayPointName and att.Name ~= self.RayPointName then continue end
 
 		if att:IsA("Attachment") and
@@ -97,34 +86,31 @@ function RaycastHitbox:StartHit(model)
 	end
 
 	if not self.UpdateAttachments then
-		self._HitConnection = RunService.Heartbeat:Connect(function(deltaTime)
+		self._HitConnection = RunService.Heartbeat:Connect(function()
 			for _, point in ipairs(RayPointsTable) do
 				local rayEnabled = point.RayEnabled
 				rayEnabled = (rayEnabled == true or rayEnabled == nil)
 				if not rayEnabled then continue end
 
 				local partCFrame = point.Attachment.Parent.CFrame
-
 				local pos = partCFrame.Position + point.Position
 				local lastPos = point.LastPosition
 
 				local result = nil
 
 				if point.RayPointType == RAY_CAST_NAME then
-					result = workspace:Raycast(lastPos, pos - lastPos, RayParams)
-
+					result = workspace:Raycast(lastPos, pos - lastPos, self.RayParams)
 				elseif point.RayPointType == SPHERE_CAST_NAME then
 					pcall(function() -- Shapecast distance limit
-						result = workspace:Spherecast(lastPos, point.RaySize, pos - lastPos, RayParams)
-							or RaycastOnShapecast and
-							workspace:Raycast(lastPos, pos - lastPos, RayParams)
+						result = workspace:Spherecast(lastPos, point.RaySize, pos - lastPos, self.RayParams)
+							or self.RaycastOnShapecast and
+							workspace:Raycast(lastPos, pos - lastPos, self.RayParams)
 					end)
-
 				elseif point.RayPointType == BLOCK_CAST_NAME then
 					local BlockCFrame = CFrame.new(lastPos) * point.RayOrientation
 					local rayDirection = pos - lastPos
 
-					if BlockCastFaceDirection then
+					if self.BlockCastFaceDirection then
 						BlockCFrame *= CFrame.lookAt(Vector3.zero, rayDirection.Unit)
 					end
 
@@ -133,58 +119,64 @@ function RaycastHitbox:StartHit(model)
 							BlockCFrame,
 							point.RaySize,
 							rayDirection,
-							RayParams
-						) or RaycastOnShapecast and
-							workspace:Raycast(lastPos, pos - lastPos, RayParams)
+							self.RayParams
+						) or self.RaycastOnShapecast and
+							workspace:Raycast(lastPos, pos - lastPos, self.RayParams)
 					end)
 				end
 
-				if Visualize then
+				if self.Visualize then
 					CreateAdornment(pos, lastPos)
 				end
 
-				if result then
-					OnHit:Fire(result, point.Attachment)
+				if result and not (self.HitOnce and table.find(Hits, result.Instance)) then
+					table.insert(Hits, result.Instance)
+					if self.HumanoidOnly then
+						local model = result.Instance:FindFirstAncestorWhichIsA("Model")
+						if model then
+							local humanoid = model:FindFirstChildWhichIsA("Humanoid")
+							if humanoid then
+								self.OnHit:Fire(result, point.Attachment, humanoid)
+							end
+						end
+					else
+						self.OnHit:Fire(result, point.Attachment)
+					end
 				end
 
 				point.LastPosition = pos
 			end
 		end)
 	else
-		self._HitConnection = RunService.Heartbeat:Connect(function(deltaTime)
+		self._HitConnection = RunService.Heartbeat:Connect(function()
 			for _, point in ipairs(RayPointsTable) do
 				local rayEnabled = point.Attachment:GetAttribute("RayEnabled")
 				rayEnabled = (rayEnabled == true or rayEnabled == nil)
 				if not rayEnabled then continue end
 
 				local rayPointType = point.Attachment:GetAttribute("RayPointType")
-
 				local part = point.Attachment.Parent
-
 				local pos = point.Attachment.WorldPosition
 
 				local result = nil
 
 				if rayPointType == RAY_CAST_NAME then
-					result = workspace:Raycast(pos, pos - point.LastPosition, RayParams)
-
+					result = workspace:Raycast(pos, pos - point.LastPosition, self.RayParams)
 				elseif rayPointType == SPHERE_CAST_NAME then
 					pcall(function() -- Shapecast distance limit
 						result = workspace:Spherecast (
-							pos, part:GetAttribute("RaySize") or 0, pos - point.LastPosition, RayParams
-						) or RaycastOnShapecast and
-							workspace:Raycast(point.LastPosition, pos - point.LastPosition, RayParams)
+							pos, part:GetAttribute("RaySize") or 0, pos - point.LastPosition, self.RayParams
+						) or self.RaycastOnShapecast and
+							workspace:Raycast(point.LastPosition, pos - point.LastPosition, self.RayParams)
 					end)
-
 				elseif rayPointType == BLOCK_CAST_NAME then
 					local BlockSize = part:GetAttribute("RaySize") or Vector3.zero
 					local BlockCFrame = part:GetAttribute("RayOrientation") or Vector3.zero
-
 					local rayDirection = pos - point.LastPosition
 
 					BlockCFrame = CFrame.new(point.LastPosition) * CFrame.fromOrientation(BlockCFrame.X, BlockCFrame.Y, BlockCFrame.Z)
 
-					if BlockCastFaceDirection then
+					if self.BlockCastFaceDirection then
 						BlockCFrame *= CFrame.lookAt(Vector3.zero, rayDirection.Unit)
 					end
 
@@ -193,18 +185,29 @@ function RaycastHitbox:StartHit(model)
 							BlockCFrame,
 							BlockSize or Vector3.zero,
 							pos - point.LastPosition,
-							RayParams
-						) or RaycastOnShapecast and
-							workspace:Raycast(point.LastPosition, pos - point.LastPosition, RayParams)
+							self.RayParams
+						) or self.RaycastOnShapecast and
+							workspace:Raycast(point.LastPosition, pos - point.LastPosition, self.RayParams)
 					end)
 				end
 
-				if Visualize then
+				if self.Visualize then
 					CreateAdornment(pos, point.LastPosition)
 				end
 
-				if result then
-					OnHit:Fire(result, point.Attachment)
+				if result and not (self.HitOnce and table.find(Hits, result.Instance)) then
+					table.insert(Hits, result.Instance)
+					if self.HumanoidOnly then
+						local model = result.Instance:FindFirstAncestorWhichIsA("Model")
+						if model then
+							local humanoid = model:FindFirstChildWhichIsA("Humanoid")
+							if humanoid then
+								self.OnHit:Fire(result, point.Attachment, humanoid)
+							end
+						end
+					else
+						self.OnHit:Fire(result, point.Attachment)
+					end
 				end
 
 				point.LastPosition = pos

@@ -6,12 +6,12 @@ local HoneyBadger = {
 }
 HoneyBadger.__index = HoneyBadger
 
-function HoneyBadger.new(config)
-	config = config or {}
-	local new = setmetatable(GunClass.new(config), HoneyBadger)
-	new.Damage = config.Damage or 20
-	new.FireRate = config.FireRate or 20
-	new.Modes = {"Auto", "Semi"}
+function HoneyBadger.new()
+	local new = setmetatable(GunClass.new({
+		Damage = 20,
+		FireRate = 20,
+		Modes = {"Auto", "Semi"}
+	}), HoneyBadger)
 
 	return new
 end
