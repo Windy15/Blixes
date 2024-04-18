@@ -1,5 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local GameEnums = require(ReplicatedStorage.GameEnums)
 local ListClass = require(ReplicatedStorage.Modules.General.ListClass)
 local PropertiesClass = require(ReplicatedStorage.Modules.General.PropertiesClass)
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
@@ -16,6 +17,7 @@ Tool.__index = Tool
 function Tool.new(config)
 	local new = setmetatable(PropertiesClass.new(config), Tool)
 
+	new.ToolState = config.ToolState or GameEnums.ToolState.Idle
 	new.OnEquipped = Signal.new()
 	new.OnUnequipped = Signal.new()
 

@@ -5,6 +5,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 
 local Characters = require(ReplicatedStorage.Entities.Players.Characters)
 local FastCast = require(ReplicatedStorage.Modules.Collisions.FastCastRedux)
+local GameEnums = require(ReplicatedStorage.GameEnums)
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
 local StringUtils = require(ReplicatedStorage.Modules.General.StringUtils)
 local ToolClass = require(ServerScriptService.ToolClasses.ToolClass)
@@ -24,11 +25,11 @@ function Gun.new(config)
 	new.FireRate = config.Damage or 1
 	new.ReloadTime = 3
 
+	new.GunState = GameEnums.GunState.Idle
+	new.FiringModes = config.FiringModes or {GameEnums.ToolState.Semi}
 	new.CurrentMode = config.CurrentMode or 1
-	new.FiringModes = config.FiringModes or {"Semi"}
 
 	new.BulletVelocity = config.BulletVelocity or 100
-
 	new.Projectiles = config.Projectiles or {
 		Bullet = {
 			Caster = FastCast.new(),
@@ -110,19 +111,36 @@ function Gun:Reload()
 	end)
 end
 
-function Gun:ChangeMode(firingMode)
+function Gun:GetMode()
+	return self.FiringModes[self.CurrentMode]
+end
+
+function Gun:SetCurrentMode(index)
 	assert (
-		table.find(self.FiringModes, firingMode),
-		string.format("'%s' is not a valid firing mode for %s", firingMode, StringUtils.formatAddress(self, "Gun"))
+		self.FiringModes[index],
+		string.format("'%d' is not a valid index in FiringModes for %s", index, StringUtils.formatAddress(self, "Gun"))
 	)
-	self.CurrentMode = firingMode
-	self.OnModeChanged:Fire(firingMode)
+
+	self.CurrentMode = index
+	self.OnModeChanged:Fire(self.FiringModes[index])
+
+	local ToolRemotes = self.Instance.Remotes
+	ToolRemotes.ChangeMode:FireServer(self.FiringModes[index])
+end
+
+function Gun:ChangeMode(firingMode)
+	local index = table.find(self.FiringModes, firingMode)
+	assert (
+		index,
+		string.format("'%s' is not a valid firing mode for %s", tostring(firingMode), StringUtils.formatAddress(self, "Gun"))
+	)
+	self:SetCurrentMode(index)
 end
 
 function Gun:NextMode()
-	local nextIndex = (table.find(self.FiringModes, self.CurrentMode) + 1) % #self.FiringModes
+	local nextIndex = (self.CurrentMode + 1) % #self.FiringModes
 	if nextIndex == 0 then nextIndex = 1 end
-	self:ChangeMode(self.FiringModes[nextIndex])
+	self:ChangeMode(nextIndex)
 end
 
 return Gun
