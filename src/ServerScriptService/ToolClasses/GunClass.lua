@@ -123,9 +123,6 @@ function Gun:SetCurrentMode(index)
 
 	self.CurrentMode = index
 	self.OnModeChanged:Fire(self.FiringModes[index])
-
-	local ToolRemotes = self.Instance.Remotes
-	ToolRemotes.ChangeMode:FireServer(self.FiringModes[index])
 end
 
 function Gun:ChangeMode(firingMode)
