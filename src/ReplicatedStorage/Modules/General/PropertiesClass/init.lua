@@ -1,6 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
+require(script.StatModifierClass)
 
 local Properties = {}
 Properties.__index = Properties

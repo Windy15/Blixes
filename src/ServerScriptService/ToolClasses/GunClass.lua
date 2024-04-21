@@ -3,7 +3,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
-local Characters = require(ReplicatedStorage.Entities.Players.Characters)
+local Characters = require(ReplicatedStorage.Players.Characters)
 local FastCast = require(ReplicatedStorage.Modules.Collisions.FastCastRedux)
 local GameEnums = require(ReplicatedStorage.GameEnums)
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
@@ -36,14 +36,15 @@ function Gun.new(config)
 			HitConnection = nil
 		}
 	}
+	new.CurrentProjectile = config.CurrentProjectile or "Bullet"
 	new._ActiveCastIds = {}
 
 	if new.Projectiles.Bullet then
 		new.Projectiles.Bullet.HitConnection = new.Projectiles.Bullet.Caster.RayHit:Connect(function(activeCast, result)
 			activeCast:Terminate()
+
 			local char = Characters:GetCharFromInstance(result.Instance)
 			if not char then return end
-
 			char:TakeDamage(new.Damage)
 		end)
 	end
@@ -97,9 +98,8 @@ function Gun:FireProjectile(projectileName, ...)
 	return activeCast, activeCastId
 end
 
-function Gun:Shoot(projectileName, origin, direction, castBehvaiour)
-	local projectile = self.Projectiles[projectileName]
-	local activeCast, activeCastId = self:FireProjectile(projectile.Caster, origin, direction, self.BulletVelocity, castBehvaiour)
+function Gun:Shoot(direction, castBehvaiour)
+	local activeCast, activeCastId = self:FireProjectile(self.CurrentProjectile, self.Instance.Muzzle.Position, direction, self.BulletVelocity, castBehvaiour)
 end
 
 function Gun:Reload()

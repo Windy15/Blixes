@@ -30,7 +30,8 @@ function Gun.new(config)
 	new.BulletVelocity = config.BulletVelocity or 100
 	new.Projectiles = config.Projectiles or {
 		Bullet = {
-			Caster = FastCast.new()
+			Caster = FastCast.new(),
+			HitConnection = nil
 		}
 	}
 	new.CurrentProjectile = config.CurrentProjectile or "Bullet"
@@ -73,8 +74,8 @@ function Gun:FireProjectile(projectileName, ...)
 	return activeCast, activeCastId
 end
 
-function Gun:Shoot(projectileName, origin, direction, castBehvaiour)
-	local activeCast, activeCastId = self:FireProjectile(projectileName, origin, direction, self.BulletVelocity, castBehvaiour)
+function Gun:Shoot(direction, castBehvaiour)
+	local activeCast, activeCastId = self:FireProjectile(self.CurrentProjectile, self.Instance.Muzzle.Position, direction, self.BulletVelocity, castBehvaiour)
 end
 
 function Gun:Reload()

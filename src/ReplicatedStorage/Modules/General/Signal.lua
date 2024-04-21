@@ -8,8 +8,8 @@ type SignalImpl = {
 	_YieldList: table?,
 
 	new: () -> Signal,
-	Connect: (self: Signal, fun: (...any) -> ()) -> (),
-	Once: (self: Signal, fun: (...any) -> ()) -> (),
+	Connect: (self: Signal, callback: (...any) -> ()) -> (),
+	Once: (self: Signal, callback: (...any) -> ()) -> (),
 	Wait: (self: Signal, resumeTime: number?) -> (...any),
 	Fire: (...any) -> (),
 	Clear: (self: Signal) -> (),
@@ -73,8 +73,8 @@ function Signal.new(): Signal
 	}, Signal)
 end
 
-function Signal:Connect(fun: (...any) -> ())
-	local _connection = Connection.new(self, fun)
+function Signal:Connect(callback: (...any) -> ())
+	local _connection = Connection.new(self, callback)
 
 	if self._ConnectionList then
 		_connection._Next = self._ConnectionList
@@ -120,8 +120,8 @@ function Signal:Wait(resumeTime: number?)
 	return coroutine.yield(Yield._Thread)
 end
 
-function Signal:Once(fun: (...any) -> ())
-	local _connection = Connection.new(self, fun)
+function Signal:Once(callback: (...any) -> ())
+	local _connection = Connection.new(self, callback)
 
 	if self._ConnectionList then
 		_connection._Next = self._ConnectionList
@@ -145,7 +145,7 @@ function Signal:Once(fun: (...any) -> ())
 			end
 		end
 
-		fun(...)
+		callback(...)
 	end
 
 	return _connection
