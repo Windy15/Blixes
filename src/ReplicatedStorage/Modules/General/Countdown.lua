@@ -1,9 +1,9 @@
 local RunService = game:GetService("RunService")
 
-local CountTick = {}
-CountTick.__index = CountTick
+local Countdown = {}
+Countdown.__index = Countdown
 
-function CountTick.new(start, finish, roundTo, onTick)
+function Countdown.new(start, finish, roundTo, onTick)
     local new = setmetatable({
         StartTime = start,
         FinishTime = finish,
@@ -15,7 +15,7 @@ function CountTick.new(start, finish, roundTo, onTick)
         TimeRan = 0,
 
         _SimulationEvent = RunService.PostSimulation
-    }, CountTick)
+    }, Countdown)
 
     return new
 end
@@ -24,7 +24,7 @@ local function getTime(start, finish, timeRan)
     return start < finish and start + timeRan or start - timeRan
 end
 
-function CountTick:Start()
+function Countdown:Start()
     assert(not self.CountConnection, "Count object has already been started")
 
     local totalTime = math.abs(self.StartTime - self.FinishTime)
@@ -50,10 +50,10 @@ function CountTick:Start()
     end)
 end
 
-function CountTick:Stop()
+function Countdown:Stop()
     if self.CountConnection then
         self.CountConnection:Disconnect()
     end
 end
 
-return CountTick
+return Countdown
