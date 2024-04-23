@@ -6,6 +6,6 @@
 - [ ] Gun aiming with sights
 
 ### In Progress
-- [ ] Player data system
+- [x] Player data system
 - [ ] Complete inventory system
   - [ ] Equip/Unequip tools
