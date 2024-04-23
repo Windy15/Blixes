@@ -1,4 +1,3 @@
-local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -6,6 +5,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local Characters = require(ReplicatedStorage.Players.Characters)
 local FastCast = require(ReplicatedStorage.Modules.Collisions.FastCastRedux)
 local GameEnums = require(ReplicatedStorage.GameEnums)
+local RandUtils = require(ReplicatedStorage.Modules.General.RandUtils)
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
 local StringUtils = require(ReplicatedStorage.Modules.General.StringUtils)
 local ToolClass = require(ServerScriptService.ToolClasses.ToolClass)
@@ -83,7 +83,7 @@ end
 
 function Gun:FireProjectile(projectileName, ...)
 	local activeCast = self.Projectiles[projectileName].Caster:Fire(...)
-	local activeCastId = HttpService:GenerateGUID()
+	local activeCastId = RandUtils.generateId()
 	self._ActiveCastIds.Bullet[activeCast] = {
 		id = activeCastId,
 		player = self.Player

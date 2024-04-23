@@ -1,9 +1,9 @@
-local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local FastCast = require(ReplicatedStorage.Modules.Collisions.FastCastRedux)
 local GameEnums = require(ReplicatedStorage.GameEnums)
+local RandUtils = require(ReplicatedStorage.Modules.General.RandUtils)
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
 local StringUtils = require(ReplicatedStorage.Modules.General.StringUtils)
 
@@ -51,13 +51,13 @@ function Gun.new(config)
 		local activeCastIds = {}
 		new._ActiveCastIds[name] = activeCastIds
 
-		caster.LengthChanged:Connect(function(activeCast, lastPoint, rayDir, displacement, segmentVelocity)
-			if not activeCastIds[activeCast] then return end
-			ProjectileRender.updatePosition(activeCastIds[activeCast], CFrame.lookAt(lastPoint, rayDir))
+		caster.LengthChanged:Connect(function(activeCastId, lastPoint, rayDir, displacement, segmentVelocity)
+			if not activeCastIds[activeCastId] then return end
+			ProjectileRender.updatePosition(activeCastIds[activeCastId], CFrame.lookAt(lastPoint, rayDir))
 		end)
 
-		caster.CastTerminating:Connect(function(activeCast)
-			ProjectileRender.removeProjectile(player, activeCastIds[activeCast])
+		caster.CastTerminating:Connect(function(activeCastId)
+			ProjectileRender.removeProjectile(player, activeCastIds[activeCastId])
 		end)
 	end
 
@@ -66,7 +66,7 @@ end
 
 function Gun:FireProjectile(projectileName, ...)
 	local activeCast = self.Projectiles[projectileName].Caster:Fire(...)
-	local activeCastId = HttpService:GenerateGUID()
+	local activeCastId = RandUtils.generateId()
 	self._ActiveCastIds.Bullet[activeCast] = activeCastId
 
 	ProjectileRender.createProjectile(activeCastId, ReplicatedStorage.Projectiles[projectileName])
