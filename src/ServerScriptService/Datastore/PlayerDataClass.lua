@@ -12,23 +12,27 @@ function PlayerData.new(player)
         DateJoined = DateTime.now().UnixTimestampMillis,
         LastJoined = DateTime.now().UnixTimestampMillis,
 
-        Blixes = 1000, BlixesEarned = 1000,
-        Tix = 100,
+        Cash = 1000,
+        Blixes = 5,
+
+        Inventory = nil
     }, PlayerData)
 end
 
+local ERR_INVALID_CURRENCY = "%s is not a valid currency for player %s"
+
 function PlayerData:SetCurrency(currency, val)
-    assert(self[currency], `'{currency}' is not a valid currency for player {self.Player.Name}`)
+    assert(self[currency], string.format(ERR_INVALID_CURRENCY, currency, self.Player.Name))
     local oldVal = self[currency]
     self[currency] = val
-    CurrencyRemotes.Changed:Fire(oldVal, self[currency])
+    CurrencyRemotes.Changed:FireClient(self.Player, oldVal, self[currency])
 end
 
 function PlayerData:AddCurrency(currency, val)
-    assert(self[currency], `'{currency}' is not a valid currency for player {self.Player.Name}`)
+    assert(self[currency], string.format(ERR_INVALID_CURRENCY, currency, self.Player.Name))
     local oldVal = self[currency]
     self[currency] += val
-    CurrencyRemotes.Changed:Fire(oldVal, self[currency])
+    CurrencyRemotes.Changed:FireClient(self.Player.Name, oldVal, self[currency])
 end
 
 return PlayerData
