@@ -16,7 +16,8 @@ function Inventory.new(player, tools, capacity)
 
         OnToolAdded = Signal.new(),
         OnToolRemoved = Signal.new(),
-        OnSlotEquipped = Signal.new()
+        OnEquipped = Signal.new(),
+        OnUnequipped = Signal.new()
     }, Inventory)
 
     return new
@@ -27,14 +28,18 @@ function Inventory:InsertTool(tool, index)
     tool.Instance.Destroying:Connect(function()
         self:RemoveTool(tool)
     end)
+    tool.Instance.Parent = self.Player.Backpack
     table.insert(self.Tools, tool, index)
-    self.OnToolAdded:Fire(tool)
+    self.OnToolAdded:Fire(tool, index)
 end
 
 function Inventory:RemoveTool(remove)
     if type(remove) == "number" then
         local tool = self.Tools[remove]
         table.remove(self.Tools, remove)
+        if self.Player and tool.Instance and tool.Instance.Parent == self.Player.Backpack then
+            tool.Parent = nil
+        end
         self.ToolRemoved:Fire(tool, remove)
     else
         local index = table.find(self.Tools, remove)
@@ -50,8 +55,13 @@ function Inventory:ClearTools()
 end
 
 function Inventory:SetEquipped(tool)
+    local oldEquipped = self.SlotEquipped
     self.SlotEquipped = tool
-    self.OnSlotEquipped:Fire(tool)
+    if tool and tool ~= oldEquipped then
+        self.OnEquipped:Fire(tool)
+    elseif not tool and oldEquipped ~= nil then
+        self.OnUnequipped:Fire(oldEquipped)
+    end
 end
 
 return Inventory

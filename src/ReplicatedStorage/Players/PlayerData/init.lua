@@ -1,3 +1,0 @@
-local PlayerData = {}
-
-return PlayerData
