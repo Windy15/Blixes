@@ -1,3 +1,5 @@
+--!nocheck
+
 local ContentProvider = game:GetService("ContentProvider")
 local AssetList = require(script.AssetList)
 

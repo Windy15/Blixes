@@ -11,14 +11,12 @@ end
 
 function Region:PointInRegion(point)
 	if self.RegionType == "Box" then
-		local RegionPos, RegionSize = self.CFrame.Position, self.Size
-		
 		local newPoint = self.CFrame:PointToObjectSpace(point)
-		
+
 		local TopCorner = self.Size / 2
 		local BottomCorner = -TopCorner
-		
-		return 
+
+		return
 			newPoint.X >= BottomCorner.X and
 			newPoint.X <= TopCorner.X and
 			newPoint.Y >= BottomCorner.Y and
@@ -37,17 +35,19 @@ function Region:PointInRegion(point)
 		collisionPoint.CanCollide = false
 		collisionPoint.CanQuery = false
 		collisionPoint.Parent = workspace
-		
+
 		local params = OverlapParams.new()
 		params.FilterType = Enum.RaycastFilterType.Include
 		params.FilterDescendantsInstances = {collisionPoint}
 		params.BruteForceAllSlow = true
-		
+
 		local pointFound = table.find(workspace:GetPartsInPart(self.Instance, params))
-		
+
 		collisionPoint:Destroy()
-		
+
 		return pointFound and true
+	else
+		error("Invalid Region Type")
 	end
 end
 
@@ -60,18 +60,20 @@ function Region:GetTouchingParts(params)
 		return workspace:GetPartBoundsInRadius(self.CFrame, self.Size, params)
 	elseif self.RegionType == "Instance" then
 		return workspace:GetPartsInPart(self.Instance, params)
+	else
+		error("Invalid Region Type")
 	end
 end
 
 function Region:GetPlayers()
 	local players = {}
-	
+
 	for _, char in ipairs(workspace.Players:GetChildren()) do
 		if self:PointInRegion(char:GetPivot().Position) then
 			table.insert(players, char)
 		end
 	end
-	
+
 	return players
 end
 
