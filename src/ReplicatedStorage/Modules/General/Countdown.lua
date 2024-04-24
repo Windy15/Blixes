@@ -7,7 +7,7 @@ function Countdown.new(start, finish, roundTo, onTick)
     local new = setmetatable({
         StartTime = start,
         FinishTime = finish,
-        RoundTo = 1 / roundTo,
+        RoundTo = roundTo or 1,
 
         OnTick = onTick,
         OnTickEvent = nil,
@@ -35,16 +35,15 @@ function Countdown:Start()
     self.CountConnection = self._SimulationEvent:Connect(function(deltaTime)
         local runTime = os.clock() - startTime
         self.TimeRan = runTime
-        local roundedTime = math.floor(runTime * self.RoundTo + deltaTime) / self.RoundTo
         if runTime >= totalTime then
             self:Stop()
-        elseif roundedTime ~= lastTime then
-            lastTime = roundedTime
+        elseif not lastTime or runTime - lastTime >= self.RoundTo then
+            lastTime = runTime - deltaTime
             if self.OnTick then
-                self.OnTick(getTime(self.StartTime, self.FinishTime, roundedTime), self)
+                self.OnTick(getTime(self.StartTime, self.FinishTime, math.round(runTime / self.RoundTo) * self.RoundTo), self)
             end
             if self.OnTickEvent then
-                self.OnTickEvent:Fire(getTime(self.StartTime, self.FinishTime, roundedTime), self)
+                self.OnTickEvent:Fire(getTime(self.StartTime, self.FinishTime, math.round(runTime / self.RoundTo) * self.RoundTo), self)
             end
         end
     end)
