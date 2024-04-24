@@ -3,6 +3,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ClientScripts = Players.LocalPlayer.PlayerScripts
 
 local function requireFolder(folder)
+	if folder:IsA("ModuleScript") then
+		require(folder)
+	end
+
 	for _, module in ipairs(folder:GetChildren()) do
 		if module:IsA("ModuleScript") then
 			require(module)
