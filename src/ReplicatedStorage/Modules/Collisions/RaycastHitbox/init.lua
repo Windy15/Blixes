@@ -86,7 +86,7 @@ function RaycastHitbox:StartHit()
 	end
 
 	if not self.UpdateAttachments then
-		self._HitConnection = RunService.Heartbeat:Connect(function()
+		self._HitConnection = RunService.PostSimulation:Connect(function()
 			for _, point in ipairs(RayPointsTable) do
 				local rayEnabled = point.RayEnabled
 				rayEnabled = (rayEnabled == true or rayEnabled == nil)
@@ -148,7 +148,7 @@ function RaycastHitbox:StartHit()
 			end
 		end)
 	else
-		self._HitConnection = RunService.Heartbeat:Connect(function()
+		self._HitConnection = RunService.PostSimulation:Connect(function()
 			for _, point in ipairs(RayPointsTable) do
 				local rayEnabled = point.Attachment:GetAttribute("RayEnabled")
 				rayEnabled = (rayEnabled == true or rayEnabled == nil)
