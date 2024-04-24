@@ -1,51 +1,56 @@
 --!nocheck
 
 local ContentProvider = game:GetService("ContentProvider")
-local AssetList = require(script.AssetList)
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local GameLoader = {
     AssetsLoaded = 0,
     FailedAssets = {}
 }
 
+local PreloadFolders = {
+    ReplicatedStorage.Tools,
+    ReplicatedStorage.Projectiles,
+    workspace:WaitForChild("Map", 1)
+}
+
 local timedOutAssets = {}
 
-local function onAssetLoaded(id, status)
+local function onAssetLoaded(asset, status)
     if status == Enum.AssetFetchStatus.Success then
         GameLoader.AssetsLoaded += 1
     elseif status == Enum.AssetFetchStatus.TimedOut then
-        table.insert(timedOutAssets, id)
+        table.insert(timedOutAssets, asset)
     end
 end
 
-for _, asset in ipairs(AssetList.Assets) do
-    if ContentProvider:GetAssetFetchStatus(asset.Id) == Enum.AssetFetchStatus.Success then
-        continue
+for _, folder in ipairs(PreloadFolders) do
+    for _, asset in ipairs(folder:GetDescendants()) do
+        ContentProvider:PreloadAsync({asset}, onAssetLoaded)
     end
-    ContentProvider:PreloadAsync({asset.Id}, onAssetLoaded)
 end
 
 local currentAsset = nil
 
-local function onTimedOutAsset(_, status)
+local function onTimedOutAsset(id, status)
     if status == Enum.AssetFetchStatus.Success then
         GameLoader.AssetsLoaded += 1
     else
-        table.insert(GameLoader.FailedAssets, currentAsset)
+        table.insert(GameLoader.FailedAssets, {Instance = currentAsset, ContentId = id})
     end
 end
 
 for _, asset in ipairs(timedOutAssets) do
     currentAsset = asset
-    ContentProvider:PreloadAsync({asset.Id}, onTimedOutAsset)
+    ContentProvider:PreloadAsync({asset}, onTimedOutAsset)
 end
 
 for _, asset in ipairs(GameLoader.FailedAssets) do
     warn (
         string.format (
             "Could not load asset %s: %s",
-            string.match(currentAsset.Instance:GetFullName(), ".-%.(.+)"),
-            asset.Id
+            string.match(asset.Instance:GetFullName(), ".-%.(.+)"),
+            asset.ContentId
         )
     )
 end
