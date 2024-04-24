@@ -1,7 +1,13 @@
 --!strict
 
+export type Enum = {
+    Name: string,
+    Type: EnumType,
+    __tostring: () -> string,
+}
+
 export type EnumType = {
-    [string]: {},
+    [string]: Enum,
     __tostring: () -> string,
     __len: () -> number
 }
@@ -20,6 +26,8 @@ function EnumsClass.EnumType.new(dict: any, enumsName: string): EnumType
     local len = 0
     for name, enum in pairs(dict) do
         if typeof(enum) == "table" then
+            enum.Name = name
+            enum.Type = dict
             enum.__tostring = function()
                 return enumsName.."."..name
             end
@@ -46,6 +54,7 @@ function EnumsClass.new(dict: any, listName: string): EnumsClass
     local len = 0
     for name, enumType in pairs(dict) do
         if typeof(enumType) == "table" then
+            enumType.Name = name
             EnumsClass.EnumType.new(enumType, listName.."."..name)
             len += 1
         end
