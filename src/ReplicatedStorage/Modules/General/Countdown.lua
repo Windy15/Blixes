@@ -25,7 +25,7 @@ local function getTime(start, finish, timeRan)
 end
 
 function Countdown:Start()
-    assert(not self.CountConnection, "Count object has already been started")
+    assert(not self.CountConnection, "Countdown has already been started")
 
     local totalTime = math.abs(self.StartTime - self.FinishTime)
 
@@ -35,15 +35,17 @@ function Countdown:Start()
     self.CountConnection = self._SimulationEvent:Connect(function(deltaTime)
         local runTime = os.clock() - startTime
         self.TimeRan = runTime
-        if runTime >= totalTime then
+        local roundedTime = math.round(runTime / self.RoundTo) * self.RoundTo
+
+        if runTime - deltaTime >= totalTime then
             self:Stop()
-        elseif not lastTime or runTime - lastTime >= self.RoundTo then
-            lastTime = runTime - deltaTime
+        elseif roundedTime ~= lastTime and (runTime - deltaTime <= roundedTime and runTime + deltaTime >= roundedTime)  then
+            lastTime = roundedTime
             if self.OnTick then
-                self.OnTick(getTime(self.StartTime, self.FinishTime, math.round(runTime / self.RoundTo) * self.RoundTo), self)
+                self.OnTick(getTime(self.StartTime, self.FinishTime, roundedTime), self)
             end
             if self.OnTickEvent then
-                self.OnTickEvent:Fire(getTime(self.StartTime, self.FinishTime, math.round(runTime / self.RoundTo) * self.RoundTo), self)
+                self.OnTickEvent:Fire(getTime(self.StartTime, self.FinishTime, roundedTime), self)
             end
         end
     end)
