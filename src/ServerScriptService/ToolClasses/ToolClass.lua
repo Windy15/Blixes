@@ -7,7 +7,17 @@ local Signal = require(ReplicatedStorage.Modules.General.Signal)
 local Tool = {
 	GlobalTools = ListClass.new({}, {
 		OnToolAdded = Signal.new(),
-		OnToolRemoved = Signal.new()
+		OnToolRemoved = Signal.new(),
+		AddTool = function(self, tool)
+			self[tool.Instance] = tool
+			self.OnToolAdded:Fire(tool)
+		end,
+		RemoveTool = function(self, tool)
+			if self[tool.Instance] then
+				self[tool.Instance] = nil
+				self.OnToolRemoved:Fire(tool)
+			end
+		end,
 	}),
 	__type = "Tool"
 }
@@ -36,8 +46,7 @@ function Tool:Create()
 	end
 
 	self.Instance = toolClone
-	Tool.GlobalTools[self.Instance] = self
-	Tool.GlobalTools.OnToolAdded:Fire(self)
+	Tool.GlobalTools:AddTool(self)
 
 	destroyingConnection = toolClone.Destroying:Connect(function()
 		self:Destroy()
@@ -49,13 +58,12 @@ function Tool:Create()
 end
 
 function Tool:Destroy()
-	if self.Instance then self.Instance:Destroy() end
 	if destroyingConnection then
 		destroyingConnection:Disconnect()
 		destroyingConnection = nil
 	end
-	Tool.GlobalTools[self.Instance] = nil
-	Tool.GlobalTools.OnToolRemoved:Fire(self)
+	if self.Instance then self.Instance:Destroy() end
+	Tool.GlobalTools:RemoveTool(self)
 end
 
 function Tool:SetPlayer(player)
