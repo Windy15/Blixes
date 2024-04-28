@@ -1,5 +1,7 @@
-local function visualEffect(render)
+local VisualEffect = {}
+
+function VisualEffect.applyEffect(render)
 
 end
 
-return visualEffect
+return VisualEffect
