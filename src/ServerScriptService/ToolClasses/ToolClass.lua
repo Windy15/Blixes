@@ -22,6 +22,8 @@ function Tool.new(config)
 	return new
 end
 
+local destroyingConnection = nil -- in case tool instance gets destroyed without object getting destroyed
+
 function Tool:Create()
 	local toolFolder = ReplicatedStorage.Tools:FindFirstChild(self.ToolName, true)
 	assert(toolFolder, string.format("'%s' is not a valid ToolName", self.ToolName))
@@ -37,6 +39,10 @@ function Tool:Create()
 	Tool.GlobalTools[self.Instance] = self
 	Tool.GlobalTools.OnToolAdded:Fire(self)
 
+	destroyingConnection = toolClone.Destroying:Connect(function()
+		self:Destroy()
+	end)
+
 	toolClone.Server.Enabled = true
 
 	return toolClone
@@ -44,6 +50,10 @@ end
 
 function Tool:Destroy()
 	if self.Instance then self.Instance:Destroy() end
+	if destroyingConnection then
+		destroyingConnection:Disconnect()
+		destroyingConnection = nil
+	end
 	Tool.GlobalTools[self.Instance] = nil
 	Tool.GlobalTools.OnToolRemoved:Fire(self)
 end
