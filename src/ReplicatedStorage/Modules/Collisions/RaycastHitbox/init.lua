@@ -1,8 +1,6 @@
-local Debris = game:GetService("Debris")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
-local Signal = require(ReplicatedStorage.Modules.General.Signal)
+local Signal = require(script.Signal)
 
 local RAY_CAST_NAME = "Line"
 local SPHERE_CAST_NAME = "Sphere"
@@ -43,7 +41,9 @@ local function CreateAdornment(pos, lastPos)
 	adornment.Adornee = workspace.Terrain
 	adornment.Parent = workspace.Terrain
 
-	Debris:AddItem(adornment, 3)
+	task.delay(3, function()
+		adornment:Destroy()
+	end)
 end
 
 function RaycastHitbox:StartHit()
