@@ -19,6 +19,7 @@ end
 local LoadModuleFolders = {
 	ClientScripts.GameLoader,
     ReplicatedStorage.Modules,
+	ClientScripts.VisualEffects,
     ClientScripts.RenderHandlers,
 	ReplicatedStorage.Players,
     ReplicatedStorage.ToolClasses

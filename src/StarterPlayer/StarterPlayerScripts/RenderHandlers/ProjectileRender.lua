@@ -1,7 +1,9 @@
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local ListClass = require(ReplicatedStorage.Modules.General.ListClass)
 
+local VisualEffects = Players.LocalPlayer.PlayerScripts.VisualEffects
 local ProjectileRemotes = ReplicatedStorage.Remotes.Projectiles
 
 local CreateProjectile = ProjectileRemotes.CreateProjectile
@@ -12,12 +14,12 @@ local RenderFunctions = {}
 local ProjectileRenders = ListClass.new({}, RenderFunctions)
 
 function RenderFunctions.createProjectile(activeCastid, projectileFolder)
-    ProjectileRenders[activeCastid] = projectileFolder.Render:Clone()
+    local render = projectileFolder.Render:Clone()
+    ProjectileRenders[activeCastid] = render
 
-    local visualEffect = projectileFolder:FindFirstChild("VisualEffect")
-
+    local visualEffect = VisualEffects:FindFirstChild(projectileFolder.Name)
     if visualEffect then
-        task.spawn(visualEffect, projectileFolder)
+        visualEffect.applyEffect(render)
     end
 end
 
