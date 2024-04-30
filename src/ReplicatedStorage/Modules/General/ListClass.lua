@@ -2,7 +2,7 @@
 
 export type ListImpl = {
     __index: ListImpl,
-    __len: (self: any) -> number,
+    iterlen: (self: any) -> number,
     new: <T, META>(list: T, meta: META) -> List<T, META>
 }
 
@@ -25,7 +25,7 @@ function List.new<T, META>(list: T, meta: META): List<T, META>
     return setmetatable(setmetatable(list :: any, List), meta)
 end
 
-List.__len = function(self: any): number
+function List:iterlen(): number
     local len = 0
 
     for _ in pairs(self) do
