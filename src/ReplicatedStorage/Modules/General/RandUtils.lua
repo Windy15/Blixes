@@ -2,7 +2,8 @@
 
 type RandUtilsImpl = {
     generateId: () -> string,
-    toGUID: (id: string, wrapInCurlyBraces: boolean) -> string
+    toGUID: (id: string, wrapInCurlyBraces: boolean) -> string,
+    idToGUID: (id: string, wrapInCurlyBraces: boolean) -> string
 }
 
 local HttpService = game:GetService("HttpService")
@@ -13,7 +14,7 @@ function RandUtils.generateId(): string
     return string.lower((string.gsub(HttpService:GenerateGUID(false), "-", "")))
 end
 
-function RandUtils.IdtoGUID(id: string, wrapInCurlyBraces: boolean): string
+function RandUtils.idToGUID(id: string, wrapInCurlyBraces: boolean): string
     if wrapInCurlyBraces then
         return string.upper(string.format("{%s-%s-%s-%s-%s}", string.sub(id, 1, 8), string.sub(id, 9, 12), string.sub(id, 13, 16), string.sub(id, 17, 20), string.sub(id, 21, 32)))
     else
