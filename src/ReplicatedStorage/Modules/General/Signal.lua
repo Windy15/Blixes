@@ -4,6 +4,8 @@ type callback = (...any) -> ()
 
 type SignalImpl = {
 	__index: SignalImpl,
+	_ConnectionList: Connection?,
+	_YieldList: Connection?,
 
 	new: () -> Signal,
 	Connect: (self: Signal, callback: (...any) -> ()) -> Connection,
@@ -20,8 +22,6 @@ export type Signal = typeof(setmetatable({} :: {
 }, {} :: SignalImpl))
 
 type ConnectionImpl = {
-	__index: ConnectionImpl,
-
 	new: (signal: Signal, callback: callback | thread) -> Connection,
 	Disconnect: (self: Connection) -> ()
 }
@@ -32,7 +32,7 @@ export type Connection = typeof(setmetatable({} :: {
 	_Next: Connection?
 }, {} :: ConnectionImpl))
 
-local Connection = {} :: ConnectionImpl
+local Connection = {}
 Connection.__index = Connection
 
 function Connection.new(signal: Signal, callback: callback | thread): Connection
@@ -59,7 +59,7 @@ function Connection:Disconnect()
 	end
 end
 
-local Signal = {} :: SignalImpl
+local Signal = {}
 Signal.__index = Signal
 
 function Signal.new(): Signal
