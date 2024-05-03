@@ -13,24 +13,35 @@ function PlayerVerify:VerifyPosition(player, originPart, currentOrigin, expected
 
 	local partRollback = PlayerRollback[player]
 
-	local lastRecording = nil
-	local lastTime = 0
+	-- BINARY SEARCH
+	-------------------------------------
+	local min = 1
+	local max = #partRollback
+	local closestRecording = nil
+	local val = nil
 
-	for _, rec in ipairs(partRollback) do
-		if rec.Time <= pingTime and rec.Time >= lastTime then
-			lastRecording = rec
-			lastTime = rec.Time
+	while min <= max do
+		local mid = math.floor((min + max) / 2)
+		closestRecording = PlayerRollback[mid]
+		val = closestRecording.Time
+		if val == pingTime then
+			break
+		elseif val > pingTime then
+			max = mid - 1
+		elseif val < pingTime then
+			min = mid + 1
 		end
 	end
+	-------------------------------------
 
-	local originPartRollback = lastRecording.Parts[originPart]
+	local originPartRollback = closestRecording.Parts[originPart]
 
 	if not originPartRollback or (originPartRollback.Position - currentOrigin).Magnitude
 		> (expectedPositionDifference or char.Humanoid.WalkSpeed + PlayerVerify.PositionPrecision) then
 		return false
 	end
 
-	return lastRecording
+	return closestRecording
 end
 
 function PlayerVerify:RemoteTypeCheck(val, valtype, remote, player)

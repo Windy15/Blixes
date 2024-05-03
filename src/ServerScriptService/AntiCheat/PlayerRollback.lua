@@ -7,7 +7,7 @@ local Rollback = {
 }
 
 Players.PlayerAdded:Connect(function(player)
-	local PlayerRollback = {}
+	local PlayerRollback = table.create(Rollback.RecordingLimit)
 	Rollback[player] = PlayerRollback
 
 	player.CharacterAdded:Connect(function(char)
