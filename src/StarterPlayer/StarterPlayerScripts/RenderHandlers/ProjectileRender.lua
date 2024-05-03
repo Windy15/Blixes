@@ -3,6 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local ListClass = require(ReplicatedStorage.Modules.General.ListClass)
+local PartCache = require(ReplicatedStorage.Modules.Parts.PartCache)
 
 local VisualEffects = Players.LocalPlayer.PlayerScripts.VisualEffects
 local ProjectileRemotes = ReplicatedStorage.Remotes.Projectiles
@@ -15,9 +16,11 @@ local RenderFunctions = {}
 local ProjectileRenders = ListClass.new({}, RenderFunctions)
 
 function RenderFunctions.createProjectile(activeCastid, projectileFolder, hertz)
-    local render = projectileFolder.Render:Clone()
+    local render = projectileFolder.Render
+    local model = PartCache[render] and PartCache[render]:GetPart() or render:Clone()
+
     ProjectileRenders[activeCastid] = {
-        Render = render,
+        Render = model,
         Hertz = hertz,
         LastLerp = 0,
         LerpConnection = nil
@@ -25,14 +28,14 @@ function RenderFunctions.createProjectile(activeCastid, projectileFolder, hertz)
 
     local visualEffect = VisualEffects:FindFirstChild(projectileFolder.Name)
     if visualEffect then
-        visualEffect.applyEffect(render)
+        visualEffect.applyEffect(model)
     end
 end
 
 local lastPacket = 0
 
 function RenderFunctions.updatePosition(activeCastid, cframe, timeSent)
-    if timeSent < lastPacket then return end
+    if timeSent and timeSent < lastPacket then return end
     lastPacket = timeSent
 
     local render =  ProjectileRenders[activeCastid]
