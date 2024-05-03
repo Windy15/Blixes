@@ -64,7 +64,7 @@ function Gun.new(config)
 
 			for _, player in ipairs(Players:GetPlayers()) do
 				if player ~= activeCastIds[activeCast].player then
-					UpdatePosition:FireClient(player, activeCastIds[activeCast].id, CFrame.lookAt(lastPoint, rayDir))
+					UpdatePosition:FireClient(player, activeCastIds[activeCast].id, CFrame.lookAt(lastPoint, rayDir), os.clock())
 				end
 			end
 		end)
