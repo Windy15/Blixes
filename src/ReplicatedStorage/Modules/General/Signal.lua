@@ -22,6 +22,7 @@ export type Signal = typeof(setmetatable({} :: {
 }, {} :: SignalImpl))
 
 type ConnectionImpl = {
+	__index: ConnectionImpl,
 	new: (signal: Signal, callback: callback | thread) -> Connection,
 	Disconnect: (self: Connection) -> ()
 }
@@ -32,7 +33,7 @@ export type Connection = typeof(setmetatable({} :: {
 	_Next: Connection?
 }, {} :: ConnectionImpl))
 
-local Connection = {}
+local Connection = {} :: ConnectionImpl
 Connection.__index = Connection
 
 function Connection.new(signal: Signal, callback: callback | thread): Connection
@@ -59,7 +60,7 @@ function Connection:Disconnect()
 	end
 end
 
-local Signal = {}
+local Signal = {} :: SignalImpl
 Signal.__index = Signal
 
 function Signal.new(): Signal
@@ -69,7 +70,7 @@ function Signal.new(): Signal
 	}, Signal)
 end
 
-function Signal:Connect(callback: callback)
+function Signal:Connect(callback: callback): Connection
 	local _connection = Connection.new(self, callback)
 
 	if self._ConnectionList then
@@ -82,7 +83,7 @@ function Signal:Connect(callback: callback)
 	return _connection
 end
 
-function Signal:Wait(resumeTime: number?)
+function Signal:Wait(resumeTime: number?): ...any
 	local yield = Connection.new(self, coroutine.running())
 
 	if self._YieldList then
@@ -116,7 +117,7 @@ function Signal:Wait(resumeTime: number?)
 	return coroutine.yield(yield._Callback)
 end
 
-function Signal:Once(callback: callback)
+function Signal:Once(callback: callback): Connection
 	local _connection = Connection.new(self, callback)
 
 	if self._ConnectionList then
