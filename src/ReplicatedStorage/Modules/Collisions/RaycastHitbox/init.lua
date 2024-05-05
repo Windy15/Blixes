@@ -10,7 +10,7 @@ local BLOCK_CAST_NAME = "Block"
 local RaycastHitbox = {}
 RaycastHitbox.__index = RaycastHitbox
 
-function RaycastHitbox.new(model, rayParams, hitOnce, humanoidOnly)
+function RaycastHitbox.new(model: Instance, rayParams: RaycastParams?, hitOnce: boolean?, humanoidOnly: boolean?)
 	local new = setmetatable({
 		Model = model,
 		RaycastParams = rayParams or RaycastParams.new(),
@@ -219,7 +219,6 @@ end
 
 function RaycastHitbox:EndHit()
 	local HitConnection = self._HitConnection
-
 	if HitConnection then
 		HitConnection:Disconnect()
 		self._HitConnection = nil

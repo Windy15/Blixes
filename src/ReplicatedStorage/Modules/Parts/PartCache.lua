@@ -3,27 +3,27 @@
 local CACHE_CFRAME = CFrame.new(1e6, 1e6, 1e6)
 
 export type PartCache = {
-    CreatePool: (self: PartCache, poolKey: any, instance: Instance) -> (),
+    CreatePool: (self: PartCache, poolKey: any, instance: Part) -> (),
     [any]: CachePool
 }
 
 type CachePoolImpl = {
-    StorePart: (self: CachePool, part: Instance) -> (),
+    StorePart: (self: CachePool, part: Part) -> (),
     GetPart: (self: CachePool) -> (),
 }
 
 export type CachePool = typeof(setmetatable({} :: {
-    Part: Instance,
-    [number]: Instance
+    Part: Part,
+    [number]: Part
 }, {} :: CachePoolImpl))
 
 local PartCache= {} :: PartCache
 local CachePool = {} :: CachePoolImpl
 
-function PartCache:CreatePool(poolKey, instance)
+function PartCache:CreatePool(poolKey: any, part: Part?)
     assert(not PartCache[poolKey], `CachePool '{poolKey}' already exists`)
     PartCache[poolKey] = setmetatable({
-        Part = typeof(poolKey) == "Instance" and poolKey or instance
+        Part = (typeof(poolKey) == "Instance" and poolKey or part) :: Part
     }, CachePool)
 end
 

@@ -47,7 +47,7 @@ function Region:IsPointInRegion(point)
 	elseif self.RegionType == "Part" then
 		return pointInPart(point, self.Part)
 	else
-		invalidRegionType(self)
+		return invalidRegionType(self)
 	end
 end
 
@@ -61,7 +61,7 @@ function Region:GetTouchingParts(params)
 	elseif self.RegionType == "Part" then
 		return workspace:GetPartsInPart(self.Part, params)
 	else
-		invalidRegionType(self)
+		return invalidRegionType(self)
 	end
 end
 
