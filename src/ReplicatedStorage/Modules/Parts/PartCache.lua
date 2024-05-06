@@ -3,7 +3,7 @@
 local CACHE_CFRAME = CFrame.new(1e6, 1e6, 1e6)
 
 export type PartCache = {
-    CreatePool: (self: PartCache, poolKey: any, instance: Part) -> (),
+    CreatePool: (self: PartCache, poolKey: any, part: Part?) -> (),
     [any]: CachePool
 }
 
@@ -27,7 +27,7 @@ function PartCache:CreatePool(poolKey: any, part: Part?)
     }, CachePool)
 end
 
-function CachePool:StorePart(part)
+function CachePool:StorePart(part: Part)
     part.CFrame = CACHE_CFRAME
     table.insert(self, part)
 end

@@ -50,6 +50,14 @@ function Properties:CreateStat(index)
     }
 end
 
+function Properties:GetAllStats()
+	local statArr = {}
+	for stat in pairs(self.StatModifiers) do
+		table.insert(statArr, stat)
+	end
+	return statArr
+end
+
 function Properties:SetValue(index, value)
 	local oldValue = self[index]
 	self[index] = value
