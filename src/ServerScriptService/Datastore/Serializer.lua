@@ -53,7 +53,7 @@ function Serializer.deserialize(data: {[any]: any}): {[any]: any}
             table.remove(val, 1)
         elseif val[1] == "table" then
             data[k] = Serializer.deserialize(val)
-            table.remove(val[1])
+            table.remove(val, 1)
         end
     end
 
