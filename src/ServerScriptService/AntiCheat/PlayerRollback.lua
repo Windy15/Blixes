@@ -10,8 +10,10 @@ Players.PlayerAdded:Connect(function(player)
 	local PlayerRollback = table.create(Rollback.RecordingLimit)
 	Rollback[player] = PlayerRollback
 
+	local rollbackConnection = nil
+
 	player.CharacterAdded:Connect(function(char)
-		RunService.Stepped:Connect(function(deltaTime)
+		rollbackConnection = RunService.Stepped:Connect(function(deltaTime)
 			Rollback.LastDeltaTime = deltaTime
 			if #PlayerRollback >= Rollback.RecordingLimit then
 				table.remove(PlayerRollback, 1)
@@ -23,13 +25,19 @@ Players.PlayerAdded:Connect(function(player)
 			}
 
 			for _, part in ipairs(char:GetDescendants()) do
-				if part:IsA("Part") and part.CanQuery then
+				if part:IsA("BasePart") and part.CanQuery then
 					CurrentTime.Parts[part] = {CFrame = part.CFrame}
 				end
 			end
 
 			table.insert(PlayerRollback, CurrentTime)
 		end)
+	end)
+
+	player.CharacterRemoving:Connect(function()
+		if rollbackConnection then
+			rollbackConnection:Disconnect()
+		end
 	end)
 end)
 
