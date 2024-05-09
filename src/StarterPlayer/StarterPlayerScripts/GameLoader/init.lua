@@ -11,7 +11,7 @@ local GameLoader = {
 local PreloadFolders = {
     ReplicatedStorage.Tools,
     ReplicatedStorage.Projectiles,
-    workspace:WaitForChild("Map", 1)
+    workspace.Map
 }
 
 local timedOutAssets = {}
