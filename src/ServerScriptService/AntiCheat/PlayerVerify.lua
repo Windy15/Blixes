@@ -4,7 +4,7 @@ local PlayerVerify = {
 	PositionPrecision = 5
 }
 
-function PlayerVerify:VerifyPosition(player, originPart, currentOrigin, expectedPositionDifference)
+function PlayerVerify.verifyPosition(player: Player, originPart: BasePart, currentOrigin: Vector3, expectedPositionDifference: number): {[string]: any} | boolean
 	local char = player.Character
 	assert(char, `Player {player} does not have a character`)
 
@@ -36,16 +36,19 @@ function PlayerVerify:VerifyPosition(player, originPart, currentOrigin, expected
 
 	local originPartRollback = closestRecording.Parts[originPart]
 
-	if not originPartRollback or (originPartRollback.Position - currentOrigin).Magnitude
-		> (expectedPositionDifference or char.Humanoid.WalkSpeed + PlayerVerify.PositionPrecision) then
+	if not originPartRollback or (originPartRollback.CFrame.Position - currentOrigin).Magnitude
+		> expectedPositionDifference then
 		return false
 	end
 
 	return closestRecording
 end
 
-function PlayerVerify:RemoteTypeCheck(val, valtype, remote, player)
-	assert(type(val) == valtype, `Player {player} didn't enter type {valtype} for remote {remote:GetFullName()}`)
+function PlayerVerify.checkRemoteType<T>(val: T, valtype: string, remote: RemoteEvent | RemoteFunction | UnreliableRemoteEvent, player: Player): boolean
+	return (assert(
+		typeof(val) == valtype,
+		`Player {player} didn't enter type '{valtype}' for remote {remote:GetFullName()}: (entered value '{typeof(val)}: {val}')`
+	)) -- () to make assert return one value
 end
 
 return PlayerVerify
