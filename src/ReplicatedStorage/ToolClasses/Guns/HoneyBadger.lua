@@ -10,7 +10,9 @@ function HoneyBadger.new(config)
 	local new = setmetatable(GunClass.new({
 		Damage = 20,
 		FireRate = 20,
-		Modes = {"Auto", "Semi"}
+		Modes = {"Auto", "Semi"},
+
+		DisplayName = "Honey Badger"
 	}), HoneyBadger)
 
 	for k, v in pairs(config) do

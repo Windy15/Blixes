@@ -2,7 +2,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local PlayerRollback = {
-	RecordingLimit = 10000,
+	RecordingLimit = 2400, -- 10 seconds of rollback on 240 FPS
 	LastDeltaTime = 0
 }
 

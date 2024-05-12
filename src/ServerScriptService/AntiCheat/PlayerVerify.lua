@@ -1,12 +1,10 @@
 local PlayerRollback = require(script.Parent.PlayerRollback)
 
-local PlayerVerify = {
-	PositionPrecision = 5
-}
+local PlayerVerify = {}
 
 function PlayerVerify.verifyPosition(player: Player, originPart: BasePart, currentOrigin: Vector3, expectedPositionDifference: number): {[string]: any} | boolean
 	local char = player.Character
-	assert(char, `Player {player} does not have a character`)
+	if not char then error(`Player {player} does not have a character`, 2) end
 
 	local ping = player:GetNetworkPing()
 	local pingTime = os.clock() - ping
@@ -44,11 +42,12 @@ function PlayerVerify.verifyPosition(player: Player, originPart: BasePart, curre
 	return closestRecording
 end
 
-function PlayerVerify.checkRemoteType<T>(val: T, valtype: string, remote: RemoteEvent | RemoteFunction | UnreliableRemoteEvent, player: Player): boolean
-	return (assert(
-		typeof(val) == valtype,
-		`Player {player} didn't enter type '{valtype}' for remote {remote:GetFullName()}: (entered value '{typeof(val)}: {val}')`
-	)) -- () to make assert return one value
+function PlayerVerify.checkRemoteType<T>(val: T, valtype: string, remote: RemoteEvent | RemoteFunction | UnreliableRemoteEvent, player: Player): T
+	if typeof(val) == valtype then
+		return val
+	else
+		error(`Player {player} didn't enter type '{valtype}' for remote {remote:GetFullName()}: (entered value '{typeof(val)}: {val}')`, 2)
+	end
 end
 
 return PlayerVerify
