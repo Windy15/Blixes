@@ -1,3 +1,5 @@
+--!native
+
 local Region = {}
 Region.__index = Region
 

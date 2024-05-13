@@ -1,4 +1,5 @@
 --!nonstrict
+--!native
 
 local CACHE_CFRAME = CFrame.new(1e6, 1e6, 1e6)
 

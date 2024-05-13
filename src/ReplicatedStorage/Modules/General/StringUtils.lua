@@ -1,4 +1,5 @@
 --!strict
+--!native
 
 type table = {[any]: any}
 

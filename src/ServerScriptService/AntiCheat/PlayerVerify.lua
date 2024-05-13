@@ -4,7 +4,7 @@ local PlayerRollback = require(script.Parent.PlayerRollback)
 
 local PlayerVerify = {}
 
-function PlayerVerify.verifyPosition(player: Player, originPart: BasePart, currentOrigin: Vector3, expectedPositionDifference: number): {[string]: any} | boolean
+function PlayerVerify.verifyPosition(player: Player, originPart: BasePart, expectedPositionDifference: number): PlayerRollback.Recording | boolean
 	local char = player.Character
 	if not char then error(`Player {player} does not have a character`, 2) end
 
@@ -22,7 +22,7 @@ function PlayerVerify.verifyPosition(player: Player, originPart: BasePart, curre
 
 	while min <= max do
 		local mid = math.floor((min + max) / 2)
-		closestRecording = PlayerRollback[mid]
+		closestRecording = partRollback[mid]
 		val = closestRecording.Time
 		if val == pingTime then
 			break
@@ -33,10 +33,11 @@ function PlayerVerify.verifyPosition(player: Player, originPart: BasePart, curre
 		end
 	end
 	-------------------------------------
+	if not closestRecording then return false end
 
 	local originPartRollback = closestRecording.Parts[originPart]
 
-	if not originPartRollback or (originPartRollback.CFrame.Position - currentOrigin).Magnitude
+	if not originPartRollback or (originPartRollback.CFrame.Position - originPart.Position).Magnitude
 		> expectedPositionDifference then
 		return false
 	end

@@ -1,3 +1,5 @@
+--!native
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
@@ -52,10 +54,14 @@ function Properties:CreateStat(index)
     }
 end
 
-function Properties:GetAllStats()
+function Properties:GetAllStats(): {{Name: string, BaseValue: any, Value: any}}
 	local statArr = {}
 	for stat in pairs(self.StatModifiers) do
-		table.insert(statArr, stat)
+		table.insert(statArr, {
+			Name = stat,
+			BaseValue = self[stat],
+			Value = self:GetStat(stat)
+		})
 	end
 	return statArr
 end

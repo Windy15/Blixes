@@ -1,3 +1,15 @@
+--!native
+
+export type Recording = {
+	Time: number,
+	Parts: {
+		[BasePart]: {
+			CFrame: CFrame,
+			Size: Vector3
+		}
+	}
+}
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
@@ -15,11 +27,12 @@ Players.PlayerAdded:Connect(function(player)
 	player.CharacterAdded:Connect(function(char)
 		local lastTime = os.clock()
 
-		rollbackConnection = RunService.Stepped:Connect(function()
+		rollbackConnection = RunService.PostSimulation:ConnectParallel(function()
 			local deltaTime = os.clock() - lastTime
 			if deltaTime < 1 / MAX_FPS then return end
 			lastTime = os.clock()
-			PlayerRollback.LastDeltaTime = deltaTime
+
+			debug.profilebegin("Adding new recording")
 
 			if #rollback >= RECORDING_LIMIT then
 				table.remove(rollback, 1)
@@ -40,13 +53,17 @@ Players.PlayerAdded:Connect(function(player)
 			end
 
 			table.insert(rollback, newRecording)
+
+			debug.profileend()
 		end)
 	end)
 
 	player.CharacterRemoving:Connect(function()
 		if rollbackConnection then
 			rollbackConnection:Disconnect()
+			debug.profilebegin("Clearing rollback")
 			table.clear(rollback)
+			debug.profileend()
 		end
 	end)
 end)

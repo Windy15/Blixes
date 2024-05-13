@@ -1,4 +1,5 @@
 --!nocheck
+--!native
 -- ^ change to strict to crash studio c:
 
 -- A new implementation of RBXScriptSignal that uses proper Lua OOP.
