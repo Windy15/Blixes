@@ -36,7 +36,9 @@ local destroyingConnection = nil -- in case tool instance gets destroyed without
 
 function Tool:Create()
 	local toolFolder = ReplicatedStorage.Tools:FindFirstChild(self.ToolName, true)
-	assert(toolFolder, string.format("'%s' is not a valid ToolName", self.ToolName))
+	if not toolFolder then
+		error(string.format("'%s' is not a valid ToolName", self.ToolName))
+	end
 	local toolClone = toolFolder.Tool:Clone()
 
 	toolClone.Name = self.Name

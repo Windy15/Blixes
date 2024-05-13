@@ -38,7 +38,9 @@ function Inventory:RemoveTool(remove)
         self.ToolRemoved:Fire(tool, remove)
     else
         local index = table.find(self.Tools, remove)
-        assert(index, "Could not find "..StringUtils.formatAddress(remove, "Tool").." in "..StringUtils.formatAddress(self, "Inventory"))
+        if not index then
+            error("Could not find "..StringUtils.formatAddress(remove, "Tool").." in "..StringUtils.formatAddress(self, "Inventory"), 2)
+        end
         self.OnToolRemoved:Fire(remove, index)
     end
 end

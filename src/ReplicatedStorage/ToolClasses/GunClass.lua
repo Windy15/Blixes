@@ -99,10 +99,9 @@ function Gun:GetMode()
 end
 
 function Gun:SetCurrentMode(index)
-	assert (
-		self.FiringModes[index],
-		string.format("'%d' is not a valid index in FiringModes for %s", index, StringUtils.formatAddress(self, "Gun"))
-	)
+	if not self.FiringModes[index] then
+		error(string.format("'%d' is not a valid index in FiringModes for %s", index, StringUtils.formatAddress(self, "Gun")), 2)
+	end
 
 	self.CurrentMode = index
 	self.OnModeChanged:Fire(self.FiringModes[index])
@@ -113,10 +112,9 @@ end
 
 function Gun:ChangeMode(firingMode)
 	local index = table.find(self.FiringModes, firingMode)
-	assert (
-		index,
-		string.format("'%s' is not a valid firing mode for %s", tostring(firingMode), StringUtils.formatAddress(self, "Gun"))
-	)
+	if not index then
+		error(string.format("'%s' is not a valid firing mode for %s", tostring(firingMode), StringUtils.formatAddress(self, "Gun")), 2)
+	end
 	self:SetCurrentMode(index)
 end
 

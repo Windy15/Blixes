@@ -13,10 +13,12 @@ function Properties.new(new)
 	return new
 end
 
-function Properties:GetModified(index)
+function Properties:GetStat(index)
 	local value = self[index]
 	if not value then return nil end
-	assert(self.StatModifiers[index], "Index '"..index.."' is not a stat for this table")
+	if not self.StatModifiers[index] then
+		error("Index '"..index.."' is not a stat for this table", 2)
+	end
 
     local adders = table.create(#self.StatModifiers[index])
     local funcs = table.create(#self.StatModifiers[index])
@@ -38,7 +40,7 @@ function Properties:GetModified(index)
 	end
 
     for _, func in ipairs(funcs) do
-        value = func(value)
+        value = func(self, value)
     end
 
 	return value

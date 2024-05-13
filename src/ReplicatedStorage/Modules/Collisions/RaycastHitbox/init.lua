@@ -48,7 +48,9 @@ local function CreateAdornment(pos, lastPos)
 end
 
 function RaycastHitbox:StartHit()
-	assert(self.Model, "RaycastHitbox object must have a \"Model\" before :StartHit()")
+	if not self.Model then
+		error("RaycastHitbox object must have a \"Model\" before :StartHit()", 2)
+	end
 	if self._HitConnection then return end
 
 	local RayPointsTable = {}

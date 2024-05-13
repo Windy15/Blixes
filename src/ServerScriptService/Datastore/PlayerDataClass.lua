@@ -1,6 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local CurrencyRemotes = ReplicatedStorage.Remotes.Currency
+local RemotesPlayerData = ReplicatedStorage.Remotes.PlayerData
 
 local PlayerData = {}
 PlayerData.__index = PlayerData
@@ -19,20 +19,24 @@ function PlayerData.new(player)
     }, PlayerData)
 end
 
-local ERR_INVALID_CURRENCY = "%s is not a valid currency for player %s"
-
-function PlayerData:SetCurrency(currency, val)
-    assert(self[currency], string.format(ERR_INVALID_CURRENCY, currency, self.Player.Name))
-    local oldVal = self[currency]
-    self[currency] = val
-    CurrencyRemotes.Changed:FireClient(self.Player, oldVal, self[currency])
+function PlayerData:SetCash(val: number)
+    self.Cash = val
+    RemotesPlayerData.CashSet:FireClient(self.Player, self.Cash)
 end
 
-function PlayerData:AddCurrency(currency, val)
-    assert(self[currency], string.format(ERR_INVALID_CURRENCY, currency, self.Player.Name))
-    local oldVal = self[currency]
-    self[currency] += val
-    CurrencyRemotes.Changed:FireClient(self.Player.Name, oldVal, self[currency])
+function PlayerData:AddCash(add: number)
+    self.Cash += add
+    RemotesPlayerData.CashSet:FireClient(self.Player, self.Cash, true) -- If client should play animation
+end
+
+function PlayerData:SetBlixes(val: number)
+    self.Cash = val
+    RemotesPlayerData.BlixesSet:FireClient(self.Player, self.Blixes)
+end
+
+function PlayerData:AddBlixes(add: number)
+    self.Cash += add
+    RemotesPlayerData.BlixesSet:FireClient(self.Player, self.Blixes, true)
 end
 
 return PlayerData

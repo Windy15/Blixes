@@ -25,7 +25,9 @@ local function getTime(start, finish, timeRan)
 end
 
 function Countdown:Start()
-    assert(not self.CountConnection, "Countdown has already been started")
+    if self.CountConnection then
+        error("Countdown has already been started", 2)
+    end
 
     local totalTime = math.abs(self.StartTime - self.FinishTime)
 

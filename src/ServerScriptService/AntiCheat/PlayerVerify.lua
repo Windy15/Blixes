@@ -1,3 +1,5 @@
+--!native
+
 local PlayerRollback = require(script.Parent.PlayerRollback)
 
 local PlayerVerify = {}

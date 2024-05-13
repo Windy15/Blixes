@@ -1,21 +1,27 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
-local PlayerRollback = {
-	RecordingLimit = 2400, -- 10 seconds of rollback on 240 FPS
-	LastDeltaTime = 0
-}
+local RECORDING_LIMIT = 600 -- 10 seconds of rollback on 60 FPS
+local MAX_FPS = 60
+
+local PlayerRollback = {}
 
 Players.PlayerAdded:Connect(function(player)
-	local rollback = table.create(PlayerRollback.RecordingLimit)
+	local rollback = table.create(RECORDING_LIMIT)
 	PlayerRollback[player] = rollback
 
 	local rollbackConnection = nil
 
 	player.CharacterAdded:Connect(function(char)
-		rollbackConnection = RunService.Stepped:Connect(function(deltaTime)
+		local lastTime = os.clock()
+
+		rollbackConnection = RunService.Stepped:Connect(function()
+			local deltaTime = os.clock() - lastTime
+			if deltaTime < 1 / MAX_FPS then return end
+			lastTime = os.clock()
 			PlayerRollback.LastDeltaTime = deltaTime
-			if #rollback >= PlayerRollback.RecordingLimit then
+
+			if #rollback >= RECORDING_LIMIT then
 				table.remove(rollback, 1)
 			end
 

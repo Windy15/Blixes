@@ -1,4 +1,5 @@
 --!strict
+--!native
 
 type callback = (...any) -> ()
 

@@ -21,7 +21,9 @@ local PartCache= {} :: PartCache
 local CachePool = {} :: CachePoolImpl
 
 function PartCache:CreatePool(poolKey: any, part: Part?)
-    assert(not PartCache[poolKey], `CachePool '{poolKey}' already exists`)
+    if PartCache[poolKey] then
+        error(`CachePool '{poolKey}' already exists`, 2)
+    end
     PartCache[poolKey] = setmetatable({
         Part = (typeof(poolKey) == "Instance" and poolKey or part) :: Part
     }, CachePool)
