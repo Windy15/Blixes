@@ -22,4 +22,6 @@ local GameEnums = {
     }
 }
 
-return EnumList.new(GameEnums, "GameEnums")
+EnumList.new(GameEnums, "GameEnums")
+
+return GameEnums

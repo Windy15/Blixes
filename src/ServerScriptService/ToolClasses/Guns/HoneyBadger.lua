@@ -6,7 +6,7 @@ local HoneyBadger = {
 }
 HoneyBadger.__index = HoneyBadger
 
-function HoneyBadger.new()
+function HoneyBadger.new(config)
 	local new = setmetatable(GunClass.new({
 		Damage = 20,
 		FireRate = 20,
@@ -14,6 +14,12 @@ function HoneyBadger.new()
 
 		DisplayName = "Honey Badger"
 	}), HoneyBadger)
+
+	if config then
+		for k, v in pairs(config) do
+			new[k] = v
+		end
+	end
 
 	return new
 end

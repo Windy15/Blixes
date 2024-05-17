@@ -15,21 +15,23 @@ function PlayerVerify.verifyPosition(player: Player, originPart: BasePart, expec
 
 	-- BINARY SEARCH
 	-------------------------------------
-	local min = 1
-	local max = #partRollback
 	local closestRecording = nil
-	local val = nil
+	do
+		local min = 1
+		local max = #partRollback
+		local val = nil
 
-	while min <= max do
-		local mid = math.floor((min + max) / 2)
-		closestRecording = partRollback[mid]
-		val = closestRecording.Time
-		if val == pingTime then
-			break
-		elseif val > pingTime then
-			max = mid - 1
-		elseif val < pingTime then
-			min = mid + 1
+		while min <= max do
+			local mid = math.floor((min + max) / 2)
+			closestRecording = partRollback[mid]
+			val = closestRecording.Time
+			if val == pingTime then
+				break
+			elseif val > pingTime then
+				max = mid - 1
+			elseif val < pingTime then
+				min = mid + 1
+			end
 		end
 	end
 	-------------------------------------

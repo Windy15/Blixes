@@ -1,3 +1,5 @@
+--!native
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -13,7 +15,7 @@ end
 
 local LoadModuleFolders = {
 	ReplicatedStorage.Modules,
-	ReplicatedStorage.Players,
+	ServerScriptService.Players,
 	ServerScriptService.Datastore,
 	ServerScriptService.ToolClasses,
 }
