@@ -24,4 +24,4 @@ local GameEnums = {
 
 EnumList.new(GameEnums, "GameEnums")
 
-return GameEnums
+return GameEnums :: typeof(GameEnums) | EnumList.EnumList

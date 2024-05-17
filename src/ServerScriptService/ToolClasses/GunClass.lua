@@ -26,7 +26,7 @@ function Gun.new(config)
 	new.ReloadTime = 3
 
 	new.GunState = GameEnums.GunState.Idle
-	new.FiringModes = config.FiringModes or {GameEnums.ToolState.Semi}
+	new.FiringModes = config.FiringModes or {GameEnums.GunMode.Semi}
 	new.CurrentMode = config.CurrentMode or 1
 
 	new.BulletVelocity = config.BulletVelocity or 100

@@ -62,7 +62,7 @@ end
 function Tool:Equip()
 	if self.Equipped then return end
 
-	self.Instance.Remotes.Equipped:FireServer()
+	self.Instance.Remotes.Equip:FireServer()
 	self.Instance.Parent = self.Character
 	self.Equipped = true
 
@@ -74,7 +74,7 @@ end
 function Tool:Unequip()
 	if not self.Equipped then return end
 
-	self.Instance.Remotes.Unequipped:FireServer()
+	self.Instance.Remotes.Unequip:FireServer()
 	self.Instance.Parent = self.Player.Backpack
 	self.Equipped = false
 end
