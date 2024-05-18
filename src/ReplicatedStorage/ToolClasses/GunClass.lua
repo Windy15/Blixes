@@ -12,9 +12,9 @@ local ProjectileRender = require(player.PlayerScripts.RenderHandlers.ProjectileR
 
 local ToolClass = require(ReplicatedStorage.ToolClasses.ToolClass)
 
-local Gun = {
+local Gun = setmetatable({
 	ToolType = "Gun"
-}
+}, ToolClass)
 Gun.__index = Gun
 
 function Gun.new(config)

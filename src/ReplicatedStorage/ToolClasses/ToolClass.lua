@@ -5,7 +5,7 @@ local ListClass = require(ReplicatedStorage.Modules.General.ListClass)
 local PropertiesClass = require(ReplicatedStorage.Modules.General.PropertiesClass)
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
-local Tool = {
+local Tool = setmetatable({
 	GlobalTools = ListClass.new({}, {
 		OnToolAdded = Signal.new(),
 		OnToolRemoved = Signal.new(),
@@ -21,7 +21,7 @@ local Tool = {
 		end,
 	}),
 	__type = "Tool"
-}
+}, PropertiesClass)
 Tool.__index = Tool
 
 function Tool.new(config)

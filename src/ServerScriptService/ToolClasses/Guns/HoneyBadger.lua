@@ -1,9 +1,9 @@
 local ServerScriptService = game:GetService("ServerScriptService")
 local GunClass = require(ServerScriptService.ToolClasses.GunClass)
 
-local HoneyBadger = {
+local HoneyBadger = setmetatable({
 	ToolName = "HoneyBadger"
-}
+}, GunClass)
 HoneyBadger.__index = HoneyBadger
 
 function HoneyBadger.new(config)

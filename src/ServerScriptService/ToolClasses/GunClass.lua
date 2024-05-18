@@ -14,9 +14,9 @@ local CreateProjectile = ReplicatedStorage.Remotes.Projectiles.CreateProjectile
 local UpdatePosition = ReplicatedStorage.Remotes.Projectiles.UpdatePosition
 local RemoveProjectile = ReplicatedStorage.Remotes.Projectiles.RemoveProjectile
 
-local Gun = {
+local Gun = setmetatable({
 	ToolType = "Gun"
-}
+}, ToolClass)
 Gun.__index = Gun
 
 function Gun.new(config)

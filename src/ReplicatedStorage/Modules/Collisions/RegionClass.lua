@@ -4,16 +4,16 @@ local Region = {}
 Region.__index = Region
 
 function Region.new(regionType, cframeOrPart, size)
-	local new = {
+	local new = setmetatable({
 		RegionType = regionType,
-	}
+	}, Region)
 	if typeof(cframeOrPart) == "CFrame" then
 		new.CFrame = cframeOrPart
 		new.Size = size
 	else
 		new.Part = cframeOrPart
 	end
-	return setmetatable(new, Region)
+	return new
 end
 
 local function pointInPart(point, part)
