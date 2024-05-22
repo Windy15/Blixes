@@ -17,7 +17,7 @@ function SphereRegion:IsPointInRegion(point: Vector3): boolean
     return (point - self.CFrame.Position).Magnitude <= self.Size
 end
 
-function SphereRegion:GetTouchingParts(params: OverlapParams)
+function SphereRegion:GetTouchingParts(params: OverlapParams): {BasePart}
     return workspace:GetPartBoundsInRadius(self.CFrame.Position, self.Size, params)
 end
 

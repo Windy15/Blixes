@@ -40,7 +40,7 @@ end
 
 local destroyingConnection = nil -- in case tool instance gets destroyed without object getting destroyed
 
-function Tool:Create()
+function Tool:Init()
 	assert(self.Instance, "Attempt to create tool with no instance")
 	Tool.GlobalTools:AddTool(self)
 	destroyingConnection = self.Instance.Destroying:Connect(function()

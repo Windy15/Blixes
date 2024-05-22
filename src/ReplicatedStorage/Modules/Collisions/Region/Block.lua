@@ -26,7 +26,7 @@ function BlockRegion:IsPointInRegion(point: Vector3): boolean
 			newPoint.Z <= TopCorner.Z
 end
 
-function BlockRegion:GetTouchingParts(params: OverlapParams)
+function BlockRegion:GetTouchingParts(params: OverlapParams): {BasePart}
     return workspace:GetPartBoundsInBox(self.CFrame, self.Size, params)
 end
 

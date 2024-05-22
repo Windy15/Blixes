@@ -3,6 +3,7 @@
 export type EncodedData = {any}
 
 local Serializer = {
+    WarnCantSerialize = true,
     Encoders = {
         ['Vector3'] = function(val: Vector3): EncodedData
             return {'Vector3', val.X, val.Y, val.Z}
@@ -37,6 +38,8 @@ function Serializer.serialize(data: {[any]: any}): {[any]: any}
         elseif typeof(val) == "table" then
             data[k] = Serializer.serialize(val)
             table.insert(val, 1, "table")
+        elseif type(val) == "userdata" and Serializer.WarnCantSerialize then
+            warn("DataSerializer: Could not serialize datatype "..typeof(val))
         end
     end
 
@@ -54,6 +57,8 @@ function Serializer.deserialize(data: {[any]: any}): {[any]: any}
         elseif val[1] == "table" then
             data[k] = Serializer.deserialize(val)
             table.remove(val, 1)
+        elseif type(val) == "userdata" and Serializer.WarnCantSerialize then
+            warn("DataSerializer: Could not deserialize datatype "..typeof(val))
         end
     end
 

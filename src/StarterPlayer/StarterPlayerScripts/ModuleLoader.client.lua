@@ -19,8 +19,8 @@ local function requireFolder(folder)
 end
 
 local LoadModuleFolders = {
-	ClientScripts.GameLoader,
     ReplicatedStorage.Modules,
+	ClientScripts.GameLoader,
 	ClientScripts.VisualEffects,
     ClientScripts.RenderHandlers,
 	ReplicatedStorage.Players,
