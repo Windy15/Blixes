@@ -5,6 +5,8 @@ local RunService = game:GetService("RunService")
 
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
+local DEFAULT_RAY_POINT_NAME = "HitPoint"
+
 local RAY_CAST_NAME = "Line"
 local SPHERE_CAST_NAME = "Sphere"
 local BLOCK_CAST_NAME = "Block"
@@ -16,13 +18,13 @@ function RaycastHitbox.new(model: Instance, rayParams: RaycastParams?, hitOnce: 
 	local new = setmetatable({
 		Model = model,
 		RaycastParams = rayParams or RaycastParams.new(),
-		RayPointName = nil, -- Name of the attachments that will be a part of the hitbox (optional)
 		HitOnce = hitOnce, Hits = {}, -- If the OnHit should only fire a hit for each part once, and the table which contains already hit parts
 		HumanoidOnly = humanoidOnly, -- Only fires OnHit when in contact with a part whos model ancestor has a humanoid
 
+		RayPointName = DEFAULT_RAY_POINT_NAME, -- the names of the attachments which will be turned into ray points
 		Visualize = false, -- Debug visualizer
-		RaycastOnShapecast = true, -- Whether to raycast normally for every shapecast to deal with the shapecast limitations
-		UpdateAttachments = false, -- If properties or attributes of attachments updating should be taken into account (slower)
+		RaycastOnShapecast = true, -- Combines regular raycasting with shapecasts to deal with the shapecast limitations
+		UpdateAttachments = false, -- If properties or attributes of attachments updating should be taken into account (could affect performance)
 		ShallowAttachments = false, -- Whether to only get children and not descendents of "Model"
 
 		BlockCastFaceDirection = true, -- If BlockCasting faces the direction it goes
@@ -60,12 +62,9 @@ function RaycastHitbox:StartHit()
 	local attachments = self.ShallowAttachments and self.Model:GetChildren() or self.Model:GetDescendants()
 
 	for _, att in ipairs(attachments) do
-		local rayPointType = att:GetAttribute("RayPointType")
-		if self.RayPointName and att.Name ~= self.RayPointName then continue end
+		if att.Name ~= self.RayPointName then continue end
 
-		if att:IsA("Attachment") and
-			(rayPointType == RAY_CAST_NAME or rayPointType == SPHERE_CAST_NAME or rayPointType == BLOCK_CAST_NAME)
-		then
+		if att:IsA("Attachment") then
 			if not self.UpdateAttachments then
 				local rayEnabled = att:GetAttribute("RayEnabled")
 				rayEnabled = (rayEnabled == true or rayEnabled == nil)
@@ -74,7 +73,7 @@ function RaycastHitbox:StartHit()
 
 				table.insert(RayPointsTable, {
 					RayEnabled = rayEnabled,
-					RayPointType = rayPointType,
+					RayPointType = att:GetAttribute("RayPointType") or RAY_CAST_NAME,
 					Attachment = att,
 					Position = att.Position,
 					LastPosition = att.WorldPosition,

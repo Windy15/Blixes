@@ -1,9 +1,33 @@
+--!strict
+
 local RunService = game:GetService("RunService")
+
+export type CountdownImpl = {
+    __index: CountdownImpl,
+
+    new: (start: number, finish: number, roundTo: number?, onTick: (currentTime: number) -> ()?) -> (),
+    Start: (self: Countdown) -> (),
+    Stop: (self: Countdown) -> ()
+}
+
+export type Countdown = typeof(setmetatable({} :: {
+    StartTime: number,
+    FinishTime: number,
+    RoundTo: number,
+
+    OnTick: (currentTime: number) -> ()?,
+    OnTickEvent: any,
+
+    TimeRan: number,
+
+    _CountConnection: RBXScriptConnection?,
+    _SimulationEvent: RBXScriptSignal
+}, {} :: CountdownImpl))
 
 local Countdown = {}
 Countdown.__index = Countdown
 
-function Countdown.new(start, finish, roundTo, onTick)
+function Countdown.new(start: number, finish: number, roundTo: number?, onTick: (currentTime: number) -> ()?): Countdown
     local new = setmetatable({
         StartTime = start,
         FinishTime = finish,
@@ -20,12 +44,12 @@ function Countdown.new(start, finish, roundTo, onTick)
     return new
 end
 
-local function getTime(start, finish, timeRan)
+local function getTime(start: number, finish: number, timeRan: number)
     return start < finish and start + timeRan or start - timeRan
 end
 
 function Countdown:Start()
-    if self.CountConnection then
+    if self._CountConnection then
         error("Countdown has already been started", 2)
     end
 
@@ -34,28 +58,28 @@ function Countdown:Start()
     local startTime = os.clock()
     local lastTime = nil
 
-    self.CountConnection = self._SimulationEvent:Connect(function(deltaTime)
+    self._CountConnection = self._SimulationEvent:Connect(function(deltaTime)
         local runTime = os.clock() - startTime
         self.TimeRan = runTime
         local roundedTime = math.round(runTime / self.RoundTo) * self.RoundTo
 
         if runTime - deltaTime >= totalTime then
             self:Stop()
-        elseif roundedTime ~= lastTime and (runTime - deltaTime <= roundedTime and runTime + deltaTime >= roundedTime)  then
+        elseif roundedTime ~= lastTime and (runTime - deltaTime <= roundedTime and runTime + deltaTime >= roundedTime) then
             lastTime = roundedTime
             if self.OnTick then
-                self.OnTick(getTime(self.StartTime, self.FinishTime, roundedTime), self)
+                self.OnTick(getTime(self.StartTime, self.FinishTime, roundedTime))
             end
             if self.OnTickEvent then
-                self.OnTickEvent:Fire(getTime(self.StartTime, self.FinishTime, roundedTime), self)
+                self.OnTickEvent:Fire(getTime(self.StartTime, self.FinishTime, roundedTime))
             end
         end
     end)
 end
 
 function Countdown:Stop()
-    if self.CountConnection then
-        self.CountConnection:Disconnect()
+    if self._CountConnection then
+        self._CountConnection:Disconnect()
     end
 end
 

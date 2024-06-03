@@ -1,12 +1,12 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local PropertiesClass = require(ReplicatedStorage.Modules.General.PropertiesClass)
+local StatHolder = require(ReplicatedStorage.Modules.General.StatHolder)
 
-local Character = setmetatable({}, PropertiesClass)
+local Character = setmetatable({}, StatHolder)
 Character.__index = Character
 
 function Character.new(player)
-    local new = setmetatable(PropertiesClass.new({
+    local new = setmetatable(StatHolder.new({
         Player = player,
         Instance = player.Character,
     }), Character)

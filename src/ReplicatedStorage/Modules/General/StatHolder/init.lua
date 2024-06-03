@@ -3,19 +3,19 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
-require(script.StatModifierClass)
+require(script.StatModifier)
 
-local Properties = {}
-Properties.__index = Properties
+local StatHolder = {}
+StatHolder.__index = StatHolder
 
-function Properties.new(new)
-	new = setmetatable(new or {}, Properties)
-	new.PropertyChanged = Signal.new()
+function StatHolder.new(new)
+	new = setmetatable(new or {}, StatHolder)
+	new.StatChanged = Signal.new()
 	new.StatModifiers = {}
 	return new
 end
 
-function Properties:GetStat(index)
+function StatHolder:GetStat(index)
 	local value = self[index]
 	if not value then return nil end
 	if not self.StatModifiers[index] then
@@ -48,13 +48,13 @@ function Properties:GetStat(index)
 	return value
 end
 
-function Properties:CreateStat(index)
+function StatHolder:CreateStat(index)
 	self.StatModifiers[index] = {
         -- StatModifier.new()
     }
 end
 
-function Properties:GetAllStats(): {{Name: string, BaseValue: any, Value: any}}
+function StatHolder:GetAllStats(): {{Name: string, BaseValue: any, Value: any}}
 	local statArr = {}
 	for stat in pairs(self.StatModifiers) do
 		table.insert(statArr, {
@@ -66,10 +66,10 @@ function Properties:GetAllStats(): {{Name: string, BaseValue: any, Value: any}}
 	return statArr
 end
 
-function Properties:SetValue(index, value)
+function StatHolder:SetValue(index, value)
 	local oldValue = self[index]
 	self[index] = value
-	self.PropertyChanged:Fire(index, value, oldValue)
+	self.StatChanged:Fire(index, value, oldValue)
 end
 
-return Properties
+return StatHolder
