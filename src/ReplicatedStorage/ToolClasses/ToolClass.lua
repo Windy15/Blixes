@@ -49,6 +49,8 @@ function Tool:Init()
 end
 
 function Tool:Destroy()
+	StatHolder.Destroy(self)
+
 	if destroyingConnection then
 		destroyingConnection:Disconnect()
 		destroyingConnection = nil

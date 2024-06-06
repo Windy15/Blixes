@@ -23,7 +23,7 @@ function Gun.new(config)
 	local new = setmetatable(ToolClass.new(config), Gun)
 	new.Damage = config.Damage or 0
 	new.FireRate = config.Damage or 1
-	new.ReloadTime = 3
+	new.ReloadTime = config.ReloadTime or 3
 
 	new.GunState = GameEnums.GunState.Idle
 	new.FiringModes = config.FiringModes or {GameEnums.GunMode.Semi}
@@ -37,7 +37,7 @@ function Gun.new(config)
 		}
 	}
 	new.CurrentProjectile = config.CurrentProjectile or "Bullet"
-	new._ActiveCastIds = {}
+	new._ProjectileIds = {}
 
 	if new.Projectiles.Bullet then
 		new.Projectiles.Bullet.HitConnection = new.Projectiles.Bullet.Caster.RayHit:Connect(function(activeCast, result)
@@ -56,23 +56,22 @@ function Gun.new(config)
 	for name, projectile in pairs(new.Projectiles) do
 		local caster = projectile.Caster
 
-		local activeCastIds = {}
-		new._ActiveCastIds[name] = activeCastIds
+		local projIds = {}
+		new._ProjectileIds[name] = projIds
 
 		caster.LengthChanged:Connect(function(activeCast, lastPoint, rayDir, displacement, segmentVelocity)
-			if not activeCastIds[activeCast] then return end
-
+			if not projIds[activeCast] then return end
 			for _, player in ipairs(Players:GetPlayers()) do
-				if player ~= activeCastIds[activeCast].player then
-					UpdatePosition:FireClient(player, activeCastIds[activeCast].id, CFrame.lookAt(lastPoint, rayDir), os.clock())
+				if player ~= projIds[activeCast].player then
+					UpdatePosition:FireClient(player, projIds[activeCast].id, CFrame.lookAt(lastPoint, rayDir), os.clock())
 				end
 			end
 		end)
 
 		caster.CastTerminating:Connect(function(activeCast)
 			for _, player in ipairs(Players:GetPlayers()) do
-				if player ~= activeCastIds[activeCast].player then
-					RemoveProjectile:FireClient(player, activeCastIds[activeCast].id)
+				if player ~= projIds[activeCast].player then
+					RemoveProjectile:FireClient(player, projIds[activeCast].id)
 				end
 			end
 		end)
@@ -81,25 +80,29 @@ function Gun.new(config)
 	return new
 end
 
+function Gun:Init()
+	ToolClass.Init(self)
+end
+
 function Gun:FireProjectile(projectileName, ...)
 	local activeCast = self.Projectiles[projectileName].Caster:Fire(...)
-	local activeCastId = RandUtils.generateId()
-	self._ActiveCastIds.Bullet[activeCast] = {
-		id = activeCastId,
+	local projId = RandUtils.generateId()
+	self._ProjectileIds.Bullet[activeCast] = {
+		id = projId,
 		player = self.Player
 	}
 
 	for _, player in ipairs(Players:GetPlayers()) do
 		if player ~= self.Player then
-			CreateProjectile:FireClient(activeCastId, ReplicatedStorage.Projectiles[projectileName])
+			CreateProjectile:FireClient(projId, ReplicatedStorage.Projectiles[projectileName])
 		end
 	end
 
-	return activeCast, activeCastId
+	return activeCast, projId
 end
 
 function Gun:Shoot(direction, castBehvaiour)
-	local activeCast, activeCastId = self:FireProjectile(self.CurrentProjectile, self.Instance.Muzzle.Position, direction, self.BulletVelocity, castBehvaiour)
+	local activeCast, projId = self:FireProjectile(self.CurrentProjectile, self.Instance.Muzzle.Position, direction, self.BulletVelocity, castBehvaiour)
 end
 
 function Gun:Reload()
@@ -116,25 +119,27 @@ function Gun:GetMode()
 end
 
 function Gun:SetCurrentMode(index)
+	local mode = self.FiringModes[index]
 	if not self.FiringModes[index] then
 		error(string.format("'%d' is not a valid index in FiringModes for %s", index, StringUtils.formatAddress(self, "Gun")), 2)
 	end
 
 	self.CurrentMode = index
-	self.OnModeChanged:Fire(self.FiringModes[index])
+	self.OnModeChanged:Fire(mode)
+
+	return mode
 end
 
 function Gun:ChangeMode(firingMode)
 	local index = table.find(self.FiringModes, firingMode)
-	if not index then
-		error(string.format("'%s' is not a valid firing mode for %s", tostring(firingMode), StringUtils.formatAddress(self, "Gun")), 2)
+	if index then
+		return self:SetCurrentMode(index)
 	end
-	self:SetCurrentMode(index)
+	return false
 end
 
 function Gun:NextMode()
-	local nextIndex = (self.CurrentMode + 1) % #self.FiringModes
-	if nextIndex == 0 then nextIndex = 1 end
+	local nextIndex = self.CurrentMode % #self.FiringModes + 1
 	self:ChangeMode(nextIndex)
 end
 

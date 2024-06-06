@@ -6,7 +6,7 @@ local Signal = require(ReplicatedStorage.Modules.General.Signal)
 require(script.StatModifier)
 
 local StatHolder = {}
-StatHolder.__index = StatHolder
+StatHolder.__name = StatHolder
 
 function StatHolder.new(new)
 	new = setmetatable(new or {}, StatHolder)
@@ -15,17 +15,21 @@ function StatHolder.new(new)
 	return new
 end
 
-function StatHolder:GetStat(index)
-	local value = self[index]
-	if not value then return nil end
-	if not self.StatModifiers[index] then
-		error("Index '"..index.."' is not a stat for this table", 2)
+local function checkStat(self, name)
+	if not self.StatModifiers[name] then
+		error("name '"..name.."' is not a stat for this table", 3)
 	end
+end
 
-    local adders = table.create(#self.StatModifiers[index])
-    local funcs = table.create(#self.StatModifiers[index])
+function StatHolder:GetStat(name)
+	local value = self[name]
+	if not value then return nil end
+	checkStat(self, name)
 
-	for _, modifier in ipairs(self.StatModifiers[index]) do
+    local adders = table.create(#self.StatModifiers[name])
+    local funcs = table.create(#self.StatModifiers[name])
+
+	for _, modifier in ipairs(self.StatModifiers[name]) do
 		if modifier.Multiplier then -- Multipliers first
 			value *= modifier.Multiplier
 		end
@@ -48,28 +52,61 @@ function StatHolder:GetStat(index)
 	return value
 end
 
-function StatHolder:CreateStat(index)
-	self.StatModifiers[index] = {
+function StatHolder:CreateStat(name)
+	self.StatModifiers[name] = {
         -- StatModifier.new()
     }
 end
 
 function StatHolder:GetAllStats(): {{Name: string, BaseValue: any, Value: any}}
 	local statArr = {}
-	for stat in pairs(self.StatModifiers) do
+	for stat, value in pairs(self.StatModifiers) do
 		table.insert(statArr, {
 			Name = stat,
-			BaseValue = self[stat],
+			BaseValue = value,
 			Value = self:GetStat(stat)
 		})
 	end
 	return statArr
 end
 
-function StatHolder:SetValue(index, value)
-	local oldValue = self[index]
-	self[index] = value
-	self.StatChanged:Fire(index, value, oldValue)
+function StatHolder:SetValue(name, value)
+	checkStat(self, name)
+	local oldValue = self[name]
+	self[name] = value
+	self.StatChanged:Fire(name, value, oldValue)
+end
+
+function StatHolder:AddModifier(name, modifier)
+    checkStat(self, name)
+    table.insert(self.StatModifiers[name], modifier)
+end
+
+function StatHolder:RemoveModifier(name, modifier)
+    checkStat(self, name)
+	local i = table.find(self.StatModifiers, modifier)
+	if i then
+		table.remove(self.StatModifiers[name], i)
+	end
+end
+
+local function derivesFrom(val, class)
+	local meta = getmetatable(val)
+	repeat
+		if meta == class then
+			return true
+		end
+		meta = getmetatable(meta)
+	until not meta or meta == val
+	return false
+end
+
+function StatHolder:Destroy()
+	for _, val in ipairs(self) do
+		if type(val) == "table" and derivesFrom(val, Signal) then
+			val:Destroy()
+		end
+	end
 end
 
 return StatHolder

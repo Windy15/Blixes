@@ -17,11 +17,11 @@ local RemoveProjectile = ProjectileRemotes.RemoveProjectile
 local RenderFunctions = {}
 local ProjectileRenders = ListClass.new({}, RenderFunctions)
 
-function RenderFunctions.createProjectile(activeCastid, projectileFolder, hertz)
+function RenderFunctions.createProjectile(projId, projectileFolder, hertz)
     local render = projectileFolder.Render
     local model = PartCache[render] and PartCache[render]:GetPart() or render:Clone()
 
-    ProjectileRenders[activeCastid] = {
+    ProjectileRenders[projId] = {
         Render = model,
         Hertz = hertz,
         LastLerp = 0,
@@ -36,11 +36,11 @@ end
 
 local lastPacket = 0
 
-function RenderFunctions.updatePosition(activeCastid, cframe, timeSent)
+function RenderFunctions.updatePosition(projId, cframe, timeSent)
     if timeSent and timeSent < lastPacket then return end
     lastPacket = timeSent
 
-    local render =  ProjectileRenders[activeCastid]
+    local render =  ProjectileRenders[projId]
     if not render then return end
 
     if not render.Hertz then
@@ -63,11 +63,11 @@ function RenderFunctions.updatePosition(activeCastid, cframe, timeSent)
     end
 end
 
-function RenderFunctions.removeProjectile(activeCastid)
-    local render = ProjectileRenders[activeCastid]
+function RenderFunctions.removeProjectile(projId)
+    local render = ProjectileRenders[projId]
     if render then
         render.Render:Destroy()
-        ProjectileRenders[activeCastid] = nil
+        ProjectileRenders[projId] = nil
     end
 end
 

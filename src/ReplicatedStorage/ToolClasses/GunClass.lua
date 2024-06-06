@@ -35,10 +35,10 @@ function Gun.new(config)
 		}
 	}
 	new.CurrentProjectile = config.CurrentProjectile or "Bullet"
-	new._ActiveCastIds = {}
+	new._ProjectileIds = {}
 
 	for name in pairs(new.Projectiles) do
-		new._ActiveCastIds[name] = {}
+		new._ProjectileIds[name] = {}
 	end
 
 	new.OnShot = Signal.new()
@@ -48,34 +48,39 @@ function Gun.new(config)
 	for name, projectile in pairs(new.Projectiles) do
 		local caster = projectile.Caster
 
-		local activeCastIds = {}
-		new._ActiveCastIds[name] = activeCastIds
+		local projIds = {}
+		new._ProjectileIds[name] = projIds
 
-		caster.LengthChanged:Connect(function(activeCastId, lastPoint, rayDir, displacement, segmentVelocity)
-			if not activeCastIds[activeCastId] then return end
-			ProjectileRender.updatePosition(activeCastIds[activeCastId], CFrame.lookAt(lastPoint, rayDir))
+		caster.LengthChanged:Connect(function(activeCast, lastPoint, rayDir, displacement, segmentVelocity)
+			local id = projIds[activeCast]
+			if not id then return end
+			ProjectileRender.updatePosition(id, CFrame.lookAt(lastPoint, rayDir))
 		end)
 
-		caster.CastTerminating:Connect(function(activeCastId)
-			ProjectileRender.removeProjectile(player, activeCastIds[activeCastId])
+		caster.CastTerminating:Connect(function(activeCast)
+			ProjectileRender.removeProjectile(player, projIds[activeCast])
 		end)
 	end
 
 	return new
 end
 
+function Gun:Init()
+	ToolClass.Init(self)
+end
+
 function Gun:FireProjectile(projectileName, ...)
 	local activeCast = self.Projectiles[projectileName].Caster:Fire(...)
-	local activeCastId = RandUtils.generateId()
-	self._ActiveCastIds.Bullet[activeCast] = activeCastId
+	local projId = RandUtils.generateId()
+	self._ProjectileIds.Bullet[activeCast] = projId
 
-	ProjectileRender.createProjectile(activeCastId, ReplicatedStorage.Projectiles[projectileName])
+	ProjectileRender.createProjectile(projId, ReplicatedStorage.Projectiles[projectileName])
 
-	return activeCast, activeCastId
+	return activeCast, projId
 end
 
 function Gun:Shoot(direction, castBehvaiour)
-	local activeCast, activeCastId = self:FireProjectile(self.CurrentProjectile, self.Instance.Muzzle.Position, direction, self.BulletVelocity, castBehvaiour)
+	local activeCast, projId = self:FireProjectile(self.CurrentProjectile, self.Instance.Muzzle.Position, direction, self.BulletVelocity, castBehvaiour)
 end
 
 function Gun:Reload()
@@ -99,28 +104,30 @@ function Gun:GetMode()
 end
 
 function Gun:SetCurrentMode(index)
+	local mode = self.FiringModes[index]
 	if not self.FiringModes[index] then
 		error(string.format("'%d' is not a valid index in FiringModes for %s", index, StringUtils.formatAddress(self, "Gun")), 2)
 	end
 
 	self.CurrentMode = index
-	self.OnModeChanged:Fire(self.FiringModes[index])
+	self.OnModeChanged:Fire(mode)
 
 	local ToolRemotes = self.Instance.Remotes
-	ToolRemotes.ChangeMode:FireServer(self.FiringModes[index])
+	ToolRemotes.ChangeMode:FireServer(mode)
+
+	return mode
 end
 
 function Gun:ChangeMode(firingMode)
 	local index = table.find(self.FiringModes, firingMode)
-	if not index then
-		error(string.format("'%s' is not a valid firing mode for %s", tostring(firingMode), StringUtils.formatAddress(self, "Gun")), 2)
+	if index then
+		return self:SetCurrentMode(index)
 	end
-	self:SetCurrentMode(index)
+	return false
 end
 
 function Gun:NextMode()
-	local nextIndex = (self.CurrentMode + 1) % #self.FiringModes
-	if nextIndex == 0 then nextIndex = 1 end
+	local nextIndex = self.CurrentMode % #self.FiringModes + 1
 	self:ChangeMode(nextIndex)
 end
 
