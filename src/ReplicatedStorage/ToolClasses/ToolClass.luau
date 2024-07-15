@@ -1,0 +1,109 @@
+--!nonstrict
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local EnumList = require(ReplicatedStorage.Modules.General.EnumList)
+local GameEnums = require(ReplicatedStorage.GameEnums)
+local Signal = require(ReplicatedStorage.Modules.General.Signal)
+
+local _GlobalToolsMeta = {
+	__mode = "k", -- dont hold references to dead instances
+
+	_AddTool = function(self, tool)
+		self[tool.Instance] = tool
+		self.OnToolAdded:Fire(tool)
+	end,
+	_RemoveTool = function(self, tool)
+		if self[tool.Instance] then
+			self[tool.Instance] = nil
+			self.OnToolRemoved:Fire(tool)
+		end
+	end,
+
+	OnToolAdded = Signal.new(),
+	OnToolRemoved = Signal.new()
+}
+_GlobalToolsMeta.__index = _GlobalToolsMeta
+local GlobalTools = setmetatable({}, _GlobalToolsMeta)
+
+local Tool = {
+	GlobalTools = GlobalTools,
+	__type = "Tool"
+}
+Tool.__index = Tool
+
+type ToolConfig = {
+	Instance: Tool,
+
+	Equipped: boolean,
+	ToolState: EnumList.EnumItem,
+
+	Cooldowns: {[string]: any},
+
+	OnEquipped: Signal.Signal,
+	OnUnequipped: Signal.Signal,
+}
+export type ToolObject = typeof(setmetatable({} :: ToolConfig, {} :: typeof(Tool)))
+
+function Tool.new(config)
+	local new = setmetatable(config, Tool)
+
+	new.Equipped = false
+	new.ToolState = config.ToolState or GameEnums.ToolState.Idle
+
+	new.Cooldowns = {}
+
+	new.OnEquipped = Signal.new()
+	new.OnUnequipped = Signal.new()
+
+	if new.Instance then -- create guns by default on client
+		new:Create()
+	end
+
+	return new
+end
+
+function Tool:Init()
+	assert(self.Instance, "Attempt to create tool with no instance")
+	Tool.GlobalTools:_AddTool(self)
+	self._DestroyingConnection = self.Instance.Destroying:Connect(function() -- in case tool instance gets destroyed without object getting destroyed
+		self:Destroy()
+	end)
+end
+
+function Tool:Destroy()
+	if self._DestroyingConnection then
+		self._DestroyingConnection:Disconnect()
+		self._DestroyingConnection = nil
+	end
+	if self.Instance then
+		Tool.GlobalTools:_RemoveTool(self)
+		self.Instance:Destroy()
+	end
+end
+
+function Tool:Equip()
+	if self.Equipped or self.ToolState ~= GameEnums.ToolState.Idle then return end
+	self.ToolState = GameEnums.ToolState.Equipping
+
+	self.Instance.Remotes.Equip:FireServer()
+	self.Instance.Parent = self.Character
+	self.Equipped = true
+
+	local equipAnim = self.Player.Character:LoadAnimation(self.Instance.Animations.EquipAnimation)
+	self.CurrentAnim = equipAnim
+	equipAnim:Play()
+	equipAnim.Ended:Once(function()
+		self.ToolState = GameEnums.ToolState.Idle
+	end)
+end
+
+function Tool:Unequip()
+	if not self.Equipped or self.ToolState ~= GameEnums.ToolState.Idle then return end
+
+	self.Instance.Remotes.Unequip:FireServer()
+	self.Instance.Parent = self.Player.Backpack
+	self.Equipped = false
+end
+
+return Tool
