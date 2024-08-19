@@ -6,17 +6,9 @@ local RunService = game:GetService("RunService")
 
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
-local DEFAULT_RAY_POINT_NAME = "HitPoint"
-
-local RAY_CAST_NAME = "Line"
-local SPHERE_CAST_NAME = "Sphere"
-local BLOCK_CAST_NAME = "Block"
-
-local RaycastHitbox = {} :: RaycastHitboxImpl
-RaycastHitbox.__index = RaycastHitbox
-
 type RaycastHitboxImpl = {
 	__index: RaycastHitboxImpl,
+	__type: string,
 
 	new: (model: Instance, rayParams: RaycastParams?, hitOnce: boolean?, humanoidOnly: boolean?) -> RaycastHitbox,
 	StartHit: (self: RaycastHitbox) -> (),
@@ -37,13 +29,23 @@ export type RaycastHitbox = typeof(setmetatable({} ::{
 
 	BlockCastFaceDirection: boolean,
 
-	OnHit: Signal.Signal,
+	OnHit: Signal.Signal<RaycastResult, Attachment, Humanoid?>,
 
 	_HitConnection: RBXScriptConnection?,
 }, {} :: RaycastHitboxImpl))
 
+local DEFAULT_RAY_POINT_NAME = "HitPoint"
+
+local RAY_CAST_NAME = "Line"
+local SPHERE_CAST_NAME = "Sphere"
+local BLOCK_CAST_NAME = "Block"
+
+local RaycastHitbox = {} :: RaycastHitboxImpl
+RaycastHitbox.__index = RaycastHitbox
+RaycastHitbox.__type = "RaycastHitbox"
+
 function RaycastHitbox.new(model: Instance, rayParams: RaycastParams?, hitOnce: boolean?, humanoidOnly: boolean?): RaycastHitbox
-	local new = setmetatable({
+	local self = setmetatable({
 		Model = model,
 		RaycastParams = rayParams or RaycastParams.new(),
 		HitOnce = hitOnce or false, -- If the OnHit should only fire a hit for each part once, and the table which contains already hit parts
@@ -60,7 +62,7 @@ function RaycastHitbox.new(model: Instance, rayParams: RaycastParams?, hitOnce: 
 		OnHit = Signal.new()
 	}, RaycastHitbox)
 
-	return new
+	return self
 end
 
 local function CreateAdornment(pos, lastPos)

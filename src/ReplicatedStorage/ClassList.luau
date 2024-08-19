@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local ClassFolders = {
-    {"Tool", ReplicatedStorage.ToolClasses}
+    {"Tool", ReplicatedStorage.Tools.Classes}
 }
 
 local ClassList = {}

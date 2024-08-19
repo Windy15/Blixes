@@ -40,7 +40,7 @@ function PlayerVerify.verifyPosition(player: Player, originPart: BasePart, expec
 		while min <= max do
 			local mid = math.floor((min + max) / 2)
 			closestRecording = partRollback[mid]
-			val = closestRecording.Time
+			val = (closestRecording :: PlayerRollback.Recording).Time
 			if val == pingTime then
 				break
 			elseif val > pingTime then
@@ -62,9 +62,17 @@ function PlayerVerify.verifyPosition(player: Player, originPart: BasePart, expec
 	return true
 end
 
+local function isProperNum(num: number)
+	return num < math.huge
+end
+
 function PlayerVerify.checkRemoteType<T>(val: T, valtype: string, remote: RemoteEvent | RemoteFunction | UnreliableRemoteEvent, player: Player): T
 	if typeof(val) == valtype then
-		return val
+		if type(val) == "number" and not isProperNum(val) then
+			error(`Player {player} entered '{val}' number for remote {remote:GetFullName()}`, 2)
+		else
+			return val
+		end
 	else
 		error(`Player {player} didn't enter type '{valtype}' for remote {remote:GetFullName()}: (entered value '{typeof(val)}: {val}')`, 2)
 	end

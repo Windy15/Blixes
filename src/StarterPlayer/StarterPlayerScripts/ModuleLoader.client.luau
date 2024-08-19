@@ -23,7 +23,7 @@ local LoadModuleFolders : {Folder | ModuleScript} = {
     ReplicatedStorage.Modules,
 	ClientScripts.GameLoader,
     ClientScripts.RenderHandlers,
-    ReplicatedStorage.ToolClasses,
+    ReplicatedStorage.Tools,
 }
 
 print("LOADING MODULES")

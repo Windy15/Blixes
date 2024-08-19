@@ -8,10 +8,11 @@ local StatModifier = require(script.StatModifier)
 
 type StatImpl = {
     __index: StatImpl,
+    __type: string,
     __tostring: <T>(self: Stat<T>) -> string,
-    __eq: <T1, T2>(self: Stat<T1>, other: Stat<T2>) -> boolean,
-    __lt: <T1, T2>(self: Stat<T1>, other: Stat<T2>) -> boolean,
-    __le: <T1, T2>(self: Stat<T1>, other: Stat<T2>) -> boolean,
+    __eq: <T>(self: Stat<T>, other: Stat<T>) -> boolean,
+    __lt: <T>(self: Stat<T>, other: Stat<T>) -> boolean,
+    __le: <T>(self: Stat<T>, other: Stat<T>) -> boolean,
 
     new: <T>(value: T) -> Stat<T>,
     GetModified: <T>(self: Stat<T>) -> T,
@@ -20,11 +21,12 @@ type StatImpl = {
 export type Stat<T> = {
     Value: T,
     StatModifiers: {StatModifier.StatModifier},
-    Changed: Signal.Signal,
+    Changed: Signal.Signal<T>,
 }
 
 local Stat = {}
 Stat.__index = Stat
+Stat.__type = "Stat"
 
 function Stat.new(value)
     return setmetatable({

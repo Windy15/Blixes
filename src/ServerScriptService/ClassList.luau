@@ -1,7 +1,7 @@
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local ClassFolders = {
-    {"Tool", ServerScriptService.ToolClasses}
+    {"Tool", ServerScriptService.Tools.Classes}
 }
 
 local ClassList = {}

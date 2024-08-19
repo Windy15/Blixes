@@ -1,18 +1,12 @@
 --!nonstrict
 
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local FastCast = require(ReplicatedStorage.Modules.Collisions.FastCastRedux)
 local GameEnums = require(ReplicatedStorage.GameEnums)
-local RandUtils = require(ReplicatedStorage.Modules.General.RandUtils)
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
 local StringUtils = require(ReplicatedStorage.Modules.General.StringUtils)
 
-local player = Players.LocalPlayer
-local ProjectileRender = require(player.PlayerScripts.RenderHandlers.ProjectileRender)
-
-local ToolClass = require(ReplicatedStorage.ToolClasses.ToolClass)
+local ToolClass = require(ReplicatedStorage.Tools.Classes.ToolClass)
 
 local Gun = setmetatable({
 	ToolType = "Gun"
@@ -20,31 +14,15 @@ local Gun = setmetatable({
 Gun.__index = Gun
 
 function Gun.new(config)
-	local new = setmetatable(ToolClass.new(config), Gun)
+	local self = setmetatable(ToolClass.new(config), Gun)
 
-	new.FiringModes = config.FiringModes or {GameEnums.GunMode.Semi}
+	self.FiringModes = config.FiringModes or {GameEnums.GunMode.Semi}
 
-	new.ShootType = config.ShootType or GameEnums.ShootType.Projectile
+	self.OnShot = Signal.new()
+	self.OnReloading = Signal.new()
+	self.OnModeChanged = Signal.new()
 
-	if not config.ShootType then
-		new.CurrentProjectile = {
-			Name = "Bullet",
-			Caster = FastCast.new(),
-			HitConnection = nil
-		}
-	end
-
-	new._ProjectileIds = {}
-
-	for name in pairs(new.Projectiles) do
-		new._ProjectileIds[name] = {}
-	end
-
-	new.OnShot = Signal.new()
-	new.OnReloading = Signal.new()
-	new.OnModeChanged = Signal.new()
-
-	return new
+	return self
 end
 
 --[[
@@ -70,14 +48,6 @@ end
 
 function Gun:Init()
 	ToolClass.Init(self)
-end
-
-function Gun:Shoot(direction, castBehvaiour)
-	local activeCast = self.CurrentProjectile.Caster:Fire(self.Instance.Muzzle.Position, direction, self.BulletVelocity, castBehvaiour)
-	local projId = RandUtils.generateId()
-	self._ProjectileIds.Bullet[activeCast] = projId
-
-	ProjectileRender.createProjectile(projId, ReplicatedStorage.Projectiles[self.CurrentProjectile.Name])
 end
 
 function Gun:Reload()

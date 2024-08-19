@@ -33,6 +33,7 @@ Players.PlayerAdded:Connect(function(player)
 	local function finishRollback()
 		if rollbackConnection then
 			rollbackConnection:Disconnect()
+			rollbackConnection = nil
 			debug.profilebegin("Clearing rollback")
 			table.clear(rollback)
 			debug.profileend()
@@ -42,9 +43,9 @@ Players.PlayerAdded:Connect(function(player)
 	player.CharacterAdded:Connect(function(char)
 		local lastTime = os.clock()
 
-		rollbackConnection = RunService.PostSimulation:ConnectParallel(function()
+		rollbackConnection = RunService.PreAnimation:Connect(function()
 			local deltaTime = os.clock() - lastTime
-			if 1 / MAX_FPS - deltaTime < 0.001 then return end -- delta time might take a little shorter than expected fps
+			if 1 / MAX_FPS - deltaTime > 0.001 then return end -- delta time might take a little shorter than expected fps
 			lastTime = os.clock()
 
 			debug.profilebegin("Adding new recording")
@@ -55,8 +56,9 @@ Players.PlayerAdded:Connect(function(player)
 
 			local humanoid = char:FindFirstChildWhichIsA("Humanoid")
 			local state = humanoid and humanoid:GetState()
-			if not humanoid or state == Enum.HumanoidStateType.Dead then
+			if not char.Parent or not humanoid or state == Enum.HumanoidStateType.Dead then
 				finishRollback()
+				return
 			end
 
 			local newRecording = {
@@ -86,6 +88,10 @@ Players.PlayerAdded:Connect(function(player)
 	end)
 
 	player.CharacterRemoving:Connect(finishRollback)
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+	PlayerRollback[player] = nil
 end)
 
 return PlayerRollback

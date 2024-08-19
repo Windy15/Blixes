@@ -1,5 +1,5 @@
 local ServerScriptService = game:GetService("ServerScriptService")
-local GunClass = require(ServerScriptService.ToolClasses.GunClass)
+local GunClass = require(ServerScriptService.Tools.Classes.GunClass)
 
 local HoneyBadger = setmetatable({
 	ToolName = "HoneyBadger"
@@ -7,7 +7,7 @@ local HoneyBadger = setmetatable({
 HoneyBadger.__index = HoneyBadger
 
 function HoneyBadger.new(config)
-	local new = setmetatable(GunClass.new({
+	local self = setmetatable(GunClass.new({
 		Damage = 20,
 		FireRate = 20,
 		Modes = {"Auto", "Semi"},
@@ -16,12 +16,12 @@ function HoneyBadger.new(config)
 	}), HoneyBadger)
 
 	if config then
-		for k, v in pairs(config) do
-			new[k] = v
+		for k, v in config do
+			self[k] = v
 		end
 	end
 
-	return new
+	return self
 end
 
 return HoneyBadger

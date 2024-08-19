@@ -1,5 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local GunClass = require(ReplicatedStorage.ToolClasses.GunClass)
+local GunClass = require(ReplicatedStorage.Tools.Classes.GunClass)
 
 local HoneyBadger = setmetatable({
 	ToolName = "HoneyBadger"

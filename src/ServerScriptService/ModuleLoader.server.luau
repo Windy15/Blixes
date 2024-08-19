@@ -19,11 +19,11 @@ end
 
 local LoadModuleFolders : {Folder | ModuleScript} = {
 	ReplicatedStorage.Modules,
-	ServerScriptService.Players,
-	ServerScriptService.Anticheat,
 	ServerScriptService.Datastore,
-	ServerScriptService.ToolClasses,
+	ServerScriptService.Anticheat,
+	ServerScriptService.Tools,
 	ServerScriptService.ServerData,
+	ServerScriptService.Players, -- Players start loading after server finishes loading
 }
 
 print("LOADING MODULES")

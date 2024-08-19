@@ -1,4 +1,5 @@
 --!native
+--!strict
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -10,16 +11,20 @@ local CreateProjectile = ProjectileRemotes.CreateProjectile
 local UpdatePosition = ProjectileRemotes.UpdatePosition
 local RemoveProjectile = ProjectileRemotes.RemoveProjectile
 
-local RenderFunctions = {}
-RenderFunctions.__index = RenderFunctions
-local ProjectileRenders = setmetatable({}, RenderFunctions)
+export type Render = {
+    Model: Model
+}
 
-function RenderFunctions.createProjectile(projId, projectileFolder)
+local ProjectileRender = {
+    Renders = table.create(1000) :: {[number]: Render}
+}
+
+function ProjectileRender.createProjectile(projId, projectileFolder)
     local render = projectileFolder.Render
     local model = PartCache[render] and PartCache[render]:GetPart() or render:Clone()
 
-    ProjectileRenders[projId] = {
-        Render = model,
+    ProjectileRender.Renders[projId] = {
+        Model = model,
     }
 
     local visualEffect = projectileFolder:FindFirstChild("VisualEffect")
@@ -28,22 +33,22 @@ function RenderFunctions.createProjectile(projId, projectileFolder)
     end
 end
 
-function RenderFunctions.updatePosition(projId: string, cframe: CFrame)
-    local render =  ProjectileRenders[projId]
+function ProjectileRender.updatePosition(projId: number, cframe: CFrame)
+    local render =  ProjectileRender.Renders[projId]
     if not render then return end
 
-    render.Render:SetPivot(cframe)
+    render.Model:PivotTo(cframe)
 end
 
-function RenderFunctions.removeProjectile(projId)
-    local render = ProjectileRenders[projId]
+function ProjectileRender.removeProjectile(projId)
+    local render = ProjectileRender.Renders[projId]
     if render then
-        render.Render:Destroy()
-        ProjectileRenders[projId] = nil
+        render.Model:Destroy()
+        ProjectileRender.Renders[projId] = nil
     end
 end
 
-CreateProjectile.OnClientEvent:Connect(RenderFunctions.createProjectile) -- Create projectile client side
+CreateProjectile.OnClientEvent:Connect(ProjectileRender.createProjectile) -- Create projectile client side
 do
     local lastPacket = 0
 
@@ -51,10 +56,10 @@ do
         if timeSent < lastPacket then return end
         lastPacket = timeSent
 
-        RenderFunctions.updatePosition(...)
+        ProjectileRender.updatePosition(...)
     end)
 end
-UpdatePosition.OnClientEvent:Connect(RenderFunctions.updatePosition) -- Replicate movement of projectile
-RemoveProjectile.OnClientEvent:Connect(RenderFunctions.removeProjectile) -- Destroy projectile
+UpdatePosition.OnClientEvent:Connect(ProjectileRender.updatePosition) -- Replicate movement of projectile
+RemoveProjectile.OnClientEvent:Connect(ProjectileRender.removeProjectile) -- Destroy projectile
 
-return ProjectileRenders
+return ProjectileRender

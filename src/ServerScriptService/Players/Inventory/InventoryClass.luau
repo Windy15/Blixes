@@ -8,7 +8,7 @@ local Inventory = {}
 Inventory.__index = Inventory
 
 function Inventory.new(player, capacity, tools)
-    local new = setmetatable({
+    local self = setmetatable({
         Player = player,
 
         SlotEquipped = nil,
@@ -21,7 +21,7 @@ function Inventory.new(player, capacity, tools)
         OnUnequipped = Signal.new()
     }, Inventory)
 
-    return new
+    return self
 end
 
 function Inventory:AddTool(tool, slotIndex: number?)

@@ -1,6 +1,7 @@
 # To do list
 
 ### Plans
+- [ ] Lighting mixer
 - [ ] Session locking with MemoryStoreService
 - [ ] Gun aiming with sights
 - [ ] Client side rendering of tool
@@ -8,6 +9,6 @@
 
 ### In Progress
 - [x] Player data system
-- [ ] Projectile class
+- [x] Projectile class
 - [ ] Complete inventory system
   - [ ] Equip/Unequip tools

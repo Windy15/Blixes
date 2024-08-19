@@ -20,12 +20,6 @@ local GameEnums = {
         Burst = 3,
         Special = 4
     },
-
-    ShootType = {
-        Projectile = 1,
-        Hitscan = 2,
-        Other = 3
-    },
 }
 
 EnumList.new(GameEnums, "GameEnums")

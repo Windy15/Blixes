@@ -1,4 +1,4 @@
---!nocheck
+--!strict
 
 local ContentProvider = game:GetService("ContentProvider")
 local Players = game:GetService("Players")
@@ -8,7 +8,7 @@ local plr = Players.LocalPlayer
 
 local GameLoader = {
     AssetsLoaded = 0,
-    FailedAssets = {}
+    FailedAssets = {} :: {{Instance: Instance, ContentId: string}}
 }
 
 local PreloadFolders = {
@@ -18,7 +18,7 @@ local PreloadFolders = {
     workspace.Map,
 }
 
-local timedOutAssets = {}
+local timedOutAssets = {} :: {Instance}
 
 local function onAssetLoaded(asset, status)
     if status == Enum.AssetFetchStatus.Success then
@@ -53,7 +53,7 @@ for _, asset in ipairs(GameLoader.FailedAssets) do
     warn (
         string.format (
             "Could not load asset %s: %s",
-            string.match(asset.Instance:GetFullName(), ".-%.(.+)"),
+            string.match(asset.Instance:GetFullName(), ".-%.(.+)") :: string,
             asset.ContentId
         )
     )

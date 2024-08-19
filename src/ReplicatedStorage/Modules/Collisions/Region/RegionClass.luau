@@ -1,8 +1,8 @@
---!native
---!nonstrict
+--!strict
 
 local Region = {}
 Region.__index = Region
+Region.__type = "Region"
 
 function Region.new(config)
 	setmetatable(config, Region)

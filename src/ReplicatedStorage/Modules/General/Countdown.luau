@@ -4,6 +4,7 @@ local RunService = game:GetService("RunService")
 
 export type CountdownImpl = {
     __index: CountdownImpl,
+    __type: string,
 
     new: (start: number, finish: number, roundTo: number?, onTick: (currentTime: number) -> ()?) -> (),
     Start: (self: Countdown) -> (),
@@ -26,9 +27,10 @@ export type Countdown = typeof(setmetatable({} :: {
 
 local Countdown = {}
 Countdown.__index = Countdown
+Countdown.__type = "Countdown"
 
 function Countdown.new(start: number, finish: number, roundTo: number?, onTick: (currentTime: number) -> ()?): Countdown
-    local new = setmetatable({
+    local self = setmetatable({
         StartTime = start,
         FinishTime = finish,
         RoundTo = roundTo or 1,
@@ -41,7 +43,7 @@ function Countdown.new(start: number, finish: number, roundTo: number?, onTick: 
         _SimulationEvent = RunService.PostSimulation
     }, Countdown)
 
-    return new
+    return self
 end
 
 local function getTime(start: number, finish: number, timeRan: number)

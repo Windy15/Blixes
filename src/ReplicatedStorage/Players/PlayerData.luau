@@ -1,17 +1,20 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local InventoryClass = require(ReplicatedStorage.Players.Inventory.InventoryClass)
+
 local RemotesPlayerData = ReplicatedStorage.Remotes.PlayerData
 
 local DataMeta = {}
 DataMeta.__index = DataMeta
 local PlayerData = setmetatable({}, DataMeta)
 
-local function updateData(player, data)
-    PlayerData[player] = data
+local playerData = RemotesPlayerData.GetLoadedData:InvokeServer()
+
+if playerData.Inventory then
+    playerData.Inventory = InventoryClass.new(playerData.Inventory)
 end
 
-RemotesPlayerData.ReplicateData.OnClientEvent:Connect(updateData)
-PlayerData[Players.LocalPlayer] = RemotesPlayerData.DataLoaded.OnClientEvent:Wait()
+PlayerData[Players.LocalPlayer] = playerData
 
 return PlayerData

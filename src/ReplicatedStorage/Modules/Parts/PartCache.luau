@@ -1,5 +1,5 @@
---!nonstrict
 --!native
+--!nonstrict
 
 local CACHE_CFRAME = CFrame.new(1e6, 1e6, 1e6)
 local CACHE_TAG = "CACHED_PARTCACHE"

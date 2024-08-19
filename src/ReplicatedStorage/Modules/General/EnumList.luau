@@ -10,11 +10,19 @@ EnumList = {
 }
 ]]
 
-export type EnumItem = {
+type EnumItemImpl = {
+    __index: EnumItemImpl,
+    __type: string,
+    __tostring: (self: EnumItem) -> string,
+}
+
+export type EnumItem = typeof(setmetatable({} :: {
     Name: string,
     TypeName: string,
     Value: number,
-}
+    _Id: number,
+}, {} :: EnumItemImpl))
+
 
 export type EnumType = {
     [string]: EnumItem,
@@ -22,6 +30,7 @@ export type EnumType = {
     OrderedItems: {EnumItem},
     List: EnumList,
 }
+
 
 type EnumListImpl = {
     __index: EnumListImpl,
@@ -34,6 +43,7 @@ export type EnumList = typeof(setmetatable({} :: {
     [string]: EnumType,
     Name: string,
 }, {} :: EnumListImpl))
+
 
 local EnumType = {
     __tostring = function(self: EnumType)
@@ -48,6 +58,8 @@ local EnumType = {
 }
 
 local EnumItem = {}
+EnumItem.__index = EnumItem
+EnumItem.__type = "EnumItem"
 EnumItem.__tostring = function(self: EnumItem)
     return self.TypeName.."."..self.Name
 end
@@ -56,21 +68,36 @@ local function enumSort(x: EnumItem, y: EnumItem): boolean
     return x.Value < y.Value
 end
 
+local EnumIds = setmetatable({} :: {EnumItem}, {__mode = "k"})
+local genId = 1
+
 function EnumType.new(dict: any, typeName: string, list: EnumList): EnumType
     local orderedItems = {} :: {EnumItem}
-    for itemName, value in pairs(dict) do
+
+    local newEnumType = {}
+
+    for itemName, value in dict do
         if typeof(value) == "number" then
             local enumItem = setmetatable({
                 Name = itemName,
                 TypeName = typeName,
-                Value = value
+                Value = value,
+                _Id = genId
             }, EnumItem)
-
             table.freeze(enumItem)
-            dict[itemName] = enumItem
 
+            EnumIds[genId] = enumItem
+            genId += 1
+
+            newEnumType[itemName] = enumItem
             table.insert(orderedItems, enumItem :: any)
+        else
+            warn(debug.traceback("", 3), "EnumItem '"..itemName.."' value type must be number")
         end
+    end
+
+    for name, item in newEnumType do
+        dict[name] = item
     end
 
     table.sort(orderedItems, enumSort)
@@ -95,9 +122,8 @@ EnumList.__index = EnumList
 function EnumList.new(dict: any, listName: string?): EnumList
     listName = listName or "Enum"
     local len = 0
-    for name, enumType in pairs(dict) do
+    for name, enumType in dict do
         if typeof(enumType) == "table" then
-            enumType.Name = name
             EnumType.new(enumType, name, dict)
             len += 1
         end
@@ -108,15 +134,16 @@ function EnumList.new(dict: any, listName: string?): EnumList
     return dict
 end
 
-function EnumList:FromData(enumItemData: EnumItem)
-    local enumType = self[enumItemData.TypeName]
-    if enumType then
-        local item = enumType[enumItemData.Name]
-        if item then
-            return item
-        end
+function EnumList.toId(enumItem: EnumItem)
+    return string.format("%x", enumItem._Id)
+end
+
+function EnumList.fromId(enumId: string)
+    local id = tonumber(enumId, 16)
+    if not id then
+        error(`Invalid id {enumId} for EnumList`, 2)
     end
-    return nil
+    return EnumIds[id]
 end
 
 return EnumList

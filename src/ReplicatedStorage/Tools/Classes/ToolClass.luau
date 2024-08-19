@@ -40,27 +40,27 @@ type ToolConfig = {
 
 	Cooldowns: {[string]: any},
 
-	OnEquipped: Signal.Signal,
-	OnUnequipped: Signal.Signal,
+	OnEquipped: Signal.Signal<nil>,
+	OnUnequipped: Signal.Signal<nil>,
 }
 export type ToolObject = typeof(setmetatable({} :: ToolConfig, {} :: typeof(Tool)))
 
 function Tool.new(config)
-	local new = setmetatable(config, Tool)
+	local self = setmetatable(config, Tool)
 
-	new.Equipped = false
-	new.ToolState = config.ToolState or GameEnums.ToolState.Idle
+	self.Equipped = false
+	self.ToolState = config.ToolState or GameEnums.ToolState.Idle
 
-	new.Cooldowns = {}
+	self.Cooldowns = {}
 
-	new.OnEquipped = Signal.new()
-	new.OnUnequipped = Signal.new()
+	self.OnEquipped = Signal.new()
+	self.OnUnequipped = Signal.new()
 
-	if new.Instance then -- create guns by default on client
-		new:Create()
+	if self.Instance then -- create guns by default on client
+		self:Create()
 	end
 
-	return new
+	return self
 end
 
 function Tool:Init()

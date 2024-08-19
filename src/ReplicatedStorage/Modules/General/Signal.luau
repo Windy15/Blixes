@@ -6,61 +6,62 @@
 	O(n) fire
 ]]
 
-type callback = (...any) -> ()
+type callback<T...> = (T...) -> ()
 
-type SignalImpl = {
-	__index: SignalImpl,
-	_ConnectionList: Connection?,
-	_YieldList: Connection?,
+type SignalImpl<T...> = {
+	__index: SignalImpl<T...>,
+	__type: string,
 
-	new: () -> Signal,
-	Connect: (self: Signal, callback: (...any) -> ()) -> Connection,
-	Once: (self: Signal, callback: (...any) -> ()) -> (),
-	Wait: (self: Signal, resumeTime: number?) -> (...any),
-	Fire: (...any) -> (),
-	Clear: (self: Signal) -> (),
-	Destroy: (self: Signal) -> ()
+	new: () -> Signal<T...>,
+	Connect: (self: Signal<T...>, callback: (T...) -> ()) -> Connection<T...>,
+	Once: (self: Signal<T...>, callback: (T...) -> ()) -> (),
+	Wait: (self: Signal<T...>, resumeTime: number?) -> (T...),
+	Fire: (self: Signal<T...>, T...) -> (),
+	Clear: (self: Signal<T...>) -> (),
+	Destroy: (self: Signal<T...>) -> ()
 }
 
-export type Signal = typeof(setmetatable({} :: {
-	_ConnectionList: Connection?,
-	_YieldList: Connection?,
-}, {} :: SignalImpl))
+export type Signal<T...> = typeof(setmetatable({} :: {
+	_ConnectionList: Connection<T...>?,
+	_YieldList: Connection<T...>?,
+}, {} :: SignalImpl<T...>))
 
-type ConnectionImpl = {
-	__index: ConnectionImpl,
-	new: (signal: Signal, callback: callback | thread) -> Connection,
-	Disconnect: (self: Connection) -> ()
+type ConnectionImpl<T...> = {
+	__index: ConnectionImpl<T...>,
+	__type: string,
+	new: (signal: Signal<T...>, callback: callback<T...> | thread) -> Connection<T...>,
+	Disconnect: (self: Connection<T...>) -> ()
 }
 
-export type Connection = typeof(setmetatable({} :: {
-	_Signal: Signal,
-	_Callback: callback | thread,
-	
-	_Last: Connection?,
-	_Next: Connection?,
-	
+export type Connection<T...> = typeof(setmetatable({} :: {
+	_Signal: Signal<T...>,
+	_Callback: callback<T...> | thread,
+
+	_Last: Connection<T...>?,
+	_Next: Connection<T...>?,
+
 	Disconnected: boolean,
-}, {} :: ConnectionImpl))
+}, {} :: ConnectionImpl<T...>))
 
-local Connection = {} :: ConnectionImpl
+local Connection = {} :: ConnectionImpl<...any>
 Connection.__index = Connection
+Connection.__type = "SignalConnection"
 
-function Connection.new(signal: Signal, callback: callback | thread): Connection
+function Connection.new<T...>(signal: Signal<T...>, callback: callback<T...> | thread): Connection<T...>
 	return setmetatable({
 		_Signal = signal,
 		_Callback = callback,
-		
+
 		_Last = nil,
 		_Next = nil,
-		
+
 		Disconnected = false,
-	}, Connection)
+	}, Connection :: ConnectionImpl<T...>)
 end
 
 function Connection:Disconnect()
 	if self.Disconnected then return end
-	
+
 	if self._Last then
 		self._Last._Next = self._Next
 	elseif self._Next then
@@ -69,23 +70,24 @@ function Connection:Disconnect()
 	else
 		self._Signal._ConnectionList = nil
 	end
-	
+
 	self.Disconnected = true
 end
 
-local Signal = {} :: SignalImpl
+local Signal = {} :: SignalImpl<...any>
 Signal.__index = Signal
+Signal.__type = "Signal"
 
-function Signal.new(): Signal
+function Signal.new<T...>(): Signal<T...>
 	return setmetatable({
 		_ConnectionList = nil,
 		_YieldList = nil,
-	}, Signal)
+	}, Signal :: SignalImpl<T...>)
 end
 
-function Signal:Connect(callback: callback): Connection
+function Signal:Connect<T...>(callback: callback<T...>): Connection<T...>
 	local _connection = Connection.new(self, callback)
-	
+
 	local oldhead = self._ConnectionList
 	if oldhead then
 		oldhead._Last = _connection
@@ -98,9 +100,9 @@ function Signal:Connect(callback: callback): Connection
 	return _connection
 end
 
-function Signal:Wait(resumeTime: number?): ...any
+function Signal:Wait(resumeTime: number?)
 	local yield = Connection.new(self, coroutine.running())
-	
+
 	local oldhead = self._YieldList
 	if oldhead then
 		oldhead._Last = yield
@@ -132,7 +134,7 @@ function Signal:Wait(resumeTime: number?): ...any
 	return coroutine.yield(yield._Callback)
 end
 
-function Signal:Once(callback: callback): Connection
+function Signal:Once<T...>(callback: callback<T...>): Connection<T...>
 	local _connection = Connection.new(self, callback)
 
 	if self._ConnectionList then
@@ -164,7 +166,7 @@ end
 
 local freeRunnerThread: thread? = nil
 
-local function acquireRunnerThreadAndCallEventHandler(fn: callback, ...)
+local function acquireRunnerThreadAndCallEventHandler(fn: any, ...)
 	local acquiredRunnerThread = freeRunnerThread
 	freeRunnerThread = nil
 	fn(...)
@@ -177,7 +179,7 @@ local function runEventHandlerInFreeThread()
 	end
 end
 
-function Signal:Fire(...: any)
+function Signal:Fire(...)
 	local _connection = self._ConnectionList
 
 	while _connection do
@@ -192,7 +194,7 @@ function Signal:Fire(...: any)
 	local yield = self._YieldList
 
 	while yield do
-		coroutine.resume(yield._Callback, ...)
+		coroutine.resume(yield._Callback :: thread, ...)
 		yield = yield._Next
 		self._YieldList = yield
 	end

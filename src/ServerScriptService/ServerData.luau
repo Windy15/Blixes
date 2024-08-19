@@ -1,3 +1,4 @@
+local HttpService = game:GetService("HttpService")
 local LogService = game:GetService("LogService")
 local MemoryStoreService = game:GetService("MemoryStoreService")
 local Players = game:GetService("Players")
@@ -11,13 +12,10 @@ local ServerRemotes = ReplicatedStorage.Remotes.GlobalServerData
 
 local MainServers = MemoryStoreService:GetSortedMap("MainServers")
 
-local DataMethods = {}
-DataMethods.__index = DataMethods
-
 local ID_CHARS = string.split("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890", "")
 local ID_LEN = 5
-local ID_UPDATE_TIME = 30
-local ID_EXPIRATION = ID_UPDATE_TIME + 10
+local ID_UPDATE_TIME = 120
+local ID_EXPIRATION = ID_UPDATE_TIME + 30
 
 local SERVER_LIST_SIZE = 30
 
@@ -25,25 +23,38 @@ local REFRESH_LIST_COOLDOWN = 5
 local DATA_RETRIEVE_COOLDOWN = 5
 local JOIN_SERVER_COOLDOWN = 3
 
-local ServerData = setmetatable({
+local ServerData = {
     SERVER_ID = "",
     CachedServerList = table.create(SERVER_LIST_SIZE),
-}, DataMethods)
+    Location = nil,
+}
 
 local function generateServerId()
     local str = ""
     for _ = 1, ID_LEN do
-        str ..= ID_CHARS[math.random(1, #ID_CHARS)]
+        str ..= ID_CHARS[math.random(#ID_CHARS)]
     end
     return str
 end
+
+export type ServerData = {
+    JobId: string,
+    ServerId: string,
+    PlayerCount: number,
+    Location: {
+        Country: string,
+        Region: string,
+        City: string,
+    },
+}
 
 local function saveServerId()
     local playerCount = #Players:GetPlayers()
     MainServers:SetAsync(ServerData.SERVER_ID, {
         JobId = game.JobId,
         ServerId = ServerData.SERVER_ID,
-        PlayerCount = #Players:GetPlayers()
+        PlayerCount = #Players:GetPlayers(),
+        Location = ServerData.Location,
     }, ID_EXPIRATION, playerCount)
 end
 
@@ -87,29 +98,51 @@ do
         end
     end
 
-    task.defer(function()  -- don't yield the ModuleLoader
-        local success = false
-        repeat
-            success = safeCall(createServerId)
-        until success
-        RunService.PostSimulation:Connect(serverIdUpdate)
-    end)
+    local success = pcall(createServerId)
+    while not success do
+        success = pcall(createServerId)
+    end
+    RunService.PostSimulation:Connect(serverIdUpdate)
+end
+
+do
+    type URLResponse = {
+        status: boolean,
+        country: string,
+        regionName: string,
+        city: string,
+    }
+
+    local ServerLocationURL = "http://ip-api.com/json/?fields=16409"
+
+    local success, data = pcall(HttpService.GetAsync, HttpService, ServerLocationURL)
+    if success then
+        data = HttpService:JSONDecode(data) :: URLResponse
+        if data.status then
+            ServerData.Location = {
+                Country = data.country,
+                Region = data.regionName,
+                City = data.city,
+            }
+        end
+    end
 end
 
 game:BindToClose(function()
     safeCall(MainServers.RemoveAsync, MainServers, ServerData.SERVER_ID)
 end)
 
-LogService.MessageOut:Connect(function(message: string, messageType: EnumItem)
+LogService.MessageOut:Connect(function(message, messageType)
     if messageType == Enum.MessageType.MessageOutput then
         if message == "/serverdata" then
-            print(StringUtils.formatTable(ServerData))
+            print(StringUtils.displayTable(ServerData))
         end
     end
 end)
 
+
 local RefreshCooldowns = {}
-local RefreshDebounce = 0
+local LastRefresh = 0
 
 ServerRemotes.GetServerList.OnServerInvoke = function(player: Player)
     local cooldown = RefreshCooldowns[player]
@@ -118,7 +151,7 @@ ServerRemotes.GetServerList.OnServerInvoke = function(player: Player)
     end
     RefreshCooldowns[player] = os.clock()
 
-    if os.clock() - RefreshDebounce < 1 and ServerData.CachedServerList then
+    if os.clock() - LastRefresh < 3 and ServerData.CachedServerList then
         return true, ServerData.CachedServerList -- return a cached list for multiple players refreshing at the same time
     end
 
@@ -135,9 +168,23 @@ ServerRemotes.GetServerList.OnServerInvoke = function(player: Player)
     end
 
     ServerData.CachedServerList = biggestServers
-    RefreshDebounce = os.clock() -- debounce only resets after a successful non-cached refresh
+    LastRefresh = os.clock() -- debounce only resets after a successful non-cached refresh
 
     return true, biggestServers
+end
+
+local function getServer(serverId: string): (boolean, ServerData | string)
+    local success, serverData = safeCall(MainServers.GetAsync, MainServers, serverId)
+
+    if not success then
+        return false, "Failed to retrieve server data"
+    end
+
+    if not serverData then
+        return false, "Server doesn't exist"
+    end
+
+    return true, serverData
 end
 
 local DataCooldowns = {}
@@ -151,23 +198,13 @@ ServerRemotes.GetServerData.OnServerInvoke = function(player: Player, serverId: 
     end
     DataCooldowns[player] = os.clock()
 
-    local success, serverData = safeCall(MainServers.GetAsync, MainServers, serverId)
-
-    if not success then
-        return false, "Failed to retrieve server data"
-    end
-
-    if not serverData then
-        return false, "Invalid server id"
-    end
-
-    return true, serverData
+    return getServer(serverId)
 end
 
 local JoinCooldowns = {}
 
-ServerRemotes.JoinServer.OnServerInvoke = function(player: Player, jobId: string)
-    if type(jobId) ~= "string" then return false, "Internal error" end
+ServerRemotes.JoinServer.OnServerInvoke = function(player: Player, serverId: string)
+    if type(serverId) ~= "string" then return false, "Internal error" end
 
     local cooldown = JoinCooldowns[player]
     if cooldown and os.clock() - cooldown < JOIN_SERVER_COOLDOWN then
@@ -175,13 +212,21 @@ ServerRemotes.JoinServer.OnServerInvoke = function(player: Player, jobId: string
     end
     JoinCooldowns[player] = os.clock()
 
+    local jobId do
+        local success, data = getServer(serverId)
+        if not success then
+            return false, data
+        end
+        jobId = data.JobId
+    end
+
     local options = Instance.new("TeleportOptions")
     options.Name = "MainServers ("..player.Name..")"
     options.ServerInstanceId = jobId
     local success, _, teleportResult, errorMessage = safeCall(TeleportService.TeleportAsync, TeleportService, game.PlaceId, {player}, options)
 
     if not success or teleportResult ~= Enum.TeleportResult.Success then
-        warn(errorMessage)
+        warn("ServerData JoinServer: "..errorMessage)
 
         if teleportResult == Enum.TeleportResult.IsTeleporting then
             return false, "Currently Teleporting"
@@ -190,7 +235,7 @@ ServerRemotes.JoinServer.OnServerInvoke = function(player: Player, jobId: string
         elseif teleportResult == Enum.TeleportResult.GameEnded then
             return false, "Server no longer exists"
         elseif teleportResult == Enum.TeleportResult.GameNotFound then
-            return false, "Invalid server id"
+            return false, "Invalid game instance id"
         end
 
         return false, "Failed to teleport to server"

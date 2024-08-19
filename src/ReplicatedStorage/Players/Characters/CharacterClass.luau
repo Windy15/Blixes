@@ -2,12 +2,12 @@ local Character = {}
 Character.__index = Character
 
 function Character.new(player)
-    local new = setmetatable({
+    local self = setmetatable({
         Player = player,
         Instance = player.Character,
     }, Character)
 
-    return new
+    return self
 end
 
 return Character
