@@ -1,7 +1,7 @@
 --!native
 --!strict
 
-type object = any
+type object = {}
 type id = number
 
 type GenerationIdImpl = {
@@ -15,35 +15,46 @@ type GenerationIdImpl = {
     RemoveId: (self: GenerationId, object: object) -> (),
 }
 
-type OpenIndexNode = {
-    _Next: OpenIndexNode?,
-    Index: number,
-}
-
 export type GenerationId = typeof(setmetatable({} :: {
-    _open_index_head: OpenIndexNode?,
-    _objects: typeof(setmetatable(
-        {} :: {[id]: object},
-        {} :: {__mode: string}
-    )),
-    _ids: typeof(setmetatable(
-        {} :: {[object]: id},
-        {} :: {__mode: string}
-    )),
+    _opensize: number,
+    _openindexes: {number},
+    _objects: {[id]: object},
+    _ids: {[object]: id},
 }, {} :: GenerationIdImpl))
-
-local ObjectsMeta = {__mode = "v"}
-local IdsMeta = {__mode = "k"}
 
 local GenerationId = {} :: GenerationIdImpl
 GenerationId.__index = GenerationId
 
-function GenerationId.new(initsize: number?)
-    return setmetatable({
-        _open_index_head = nil, -- Linked list containing indexes that are nil for O(1) id creation and prevent memory buildup
-        _objects = setmetatable(initsize and table.create(initsize) or {}, ObjectsMeta),
-        _ids = setmetatable({}, IdsMeta),
+function GenerationId.new(initsize)
+    local self = setmetatable({
+        _opensize = 0,
+        _openindexes = table.create(initsize or 0),
+        _objects = table.create(initsize or 0),
+        _ids = {},
     }, GenerationId)
+    return self
+end
+
+function GenerationId:CreateId(object)
+    local openId = self._opensize
+    local id
+    if openId ~= 0 then
+        id = self._openindexes[openId]
+        self._openindexes[openId] = nil
+        self._opensize = openId - 1
+    end
+    while id and self._objects[id] do
+        openId = self._opensize
+        id = self._openindexes[openId]
+        self._openindexes[openId] = nil
+        self._opensize = openId - 1
+    end
+    if not id then
+        id = #self._objects + 1
+    end
+    self._objects[id] = object
+    self._ids[object] = id
+    return id
 end
 
 function GenerationId:GetTopId() -- Finds the index of the first nil value in _objects
@@ -51,27 +62,6 @@ function GenerationId:GetTopId() -- Finds the index of the first nil value in _o
     for _ in ipairs(self._objects :: any) do
         id += 1
     end
-    return id
-end
-
-function GenerationId:CreateId(object: object)
-    local id
-    local open_node = self._open_index_head
-    while open_node and self._objects[open_node.Index] do -- If the index isn't actually open get rid of it
-        local newhead = open_node._Next
-        self._open_index_head = newhead
-        open_node = newhead
-    end
-
-    if open_node then
-        self._open_index_head = open_node._Next
-        id = open_node.Index
-    else
-        id = #self._objects + 1
-    end
-
-    self._objects[id] = object
-    self._ids[object] = id
     return id
 end
 
@@ -83,16 +73,14 @@ function GenerationId:GetId(object: object)
     return self._ids[object]
 end
 
-function GenerationId:RemoveId(object: object)
+function GenerationId:RemoveId(object)
     local id = self._ids[object]
     if id then
         self._ids[object] = nil
         self._objects[id] = nil
-        local newhead = { -- new open index for ids is available
-            _Next = self._open_index_head,
-            Index = id,
-        }
-        self._open_index_head = newhead
+        local openId = self._opensize + 1
+        self._openindexes[openId] = id
+        self._opensize = openId
     end
 end
 

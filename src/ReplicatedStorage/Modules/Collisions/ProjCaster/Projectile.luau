@@ -9,7 +9,7 @@ local TypeHolder = require(script.Parent.TypeHolder)
 
 local PROJ_INIT_SIZE = 1000
 
-local LocalIdGen = GenerationId.new(PROJ_INIT_SIZE) -- Id's for locally created projectiles (NOT FOR REPLICATION)
+local ProjIdGen = RunService:IsServer() and GenerationId.new(PROJ_INIT_SIZE)
 local GlobalProjectiles = table.create(PROJ_INIT_SIZE)
 
 local Projectile = {} :: TypeHolder.ProjectileImpl
@@ -22,29 +22,52 @@ function Projectile.new(caster, origin, velocity)
         TimeFired = os.clock(),
 
         Origin = origin,
-        TrajectoryOrigin = origin,
+        TrajectoryList = {Origin = origin, Next = nil},
+        _TrajectoryStepped = false,
         Velocity = velocity,
         Position = origin,
+        LastPosition = origin,
+        Rotation = Vector3.zero,
     }, Projectile)
-    local id = LocalIdGen:CreateId(self)
-    self.LocalId = id
-    GlobalProjectiles[id] = self
+    if ProjIdGen then
+        local id = ProjIdGen:CreateId(self)
+        self.Id = id
+        GlobalProjectiles[id] = self
+    end
+
     return self
 end
 
-function Projectile:ChangeTrajectory(velocity: Vector3)
-    self.TrajectoryOrigin = self.Position
+function Projectile.buffToId(buff: buffer)
+    return buffer.readu16(buff, 0)
+end
+
+function Projectile.idToBuff(id: number)
+    local buff = buffer.create(2)
+    buffer.writeu16(buff, 0, id)
+    return buff
+end
+
+function Projectile:ChangeVelocity(velocity: Vector3)
+    if self._TrajectoryStepped then
+        self.TrajectoryList = {
+            Origin = self.Position,
+            Next = self.TrajectoryList,
+        }
+    end
     self.Velocity = velocity
 end
 
 function Projectile:ApplyImpulse(velocity: Vector3)
-    self.TrajectoryOrigin = self.Position
-    self.Velocity += velocity
+    self:ChangeVelocity(self.Velocity + velocity)
 end
 
 function Projectile:Destroy()
-    GlobalProjectiles[self.LocalId] = nil
-    LocalIdGen:RemoveId(self)
+    if RunService:IsServer() then
+        GlobalProjectiles[self.Id] = nil
+        ProjIdGen:RemoveId(self)
+    end
+
     self.Caster.OnProjDestroyed:Fire(self)
 end
 
@@ -66,9 +89,12 @@ RunService.PreSimulation:Connect(function()
         end
 
         local oldpos = proj.Position
-        local newpos = calculatePosition(caster.Gravity, proj.Velocity, proj.TrajectoryOrigin, os.clock() - proj.TimeFired)
+        proj.LastPosition = oldpos
+        local newpos = calculatePosition(caster.Gravity, proj.Velocity, proj.TrajectoryList.Origin, os.clock() - proj.TimeFired)
         proj.Position = newpos
-        caster.OnProjMoved:Fire(proj, oldpos, newpos)
+
+        proj._TrajectoryStepped = true
+        caster.OnProjMoved:Fire(proj, newpos)
     end
 end)
 

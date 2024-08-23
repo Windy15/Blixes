@@ -1,8 +1,6 @@
---!nonstrict
-
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local EnumList = require(ReplicatedStorage.Modules.General.EnumList)
+local EnumState = require(ReplicatedStorage.Modules.General.EnumState)
 local GameEnums = require(ReplicatedStorage.GameEnums)
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
@@ -32,26 +30,37 @@ local Tool = {
 }
 Tool.__index = Tool
 
-type ToolConfig = {
+type ToolImpl = {
+	__index: ToolImpl,
+	__type: string,
+
+	new: (ToolConfig) -> ToolObject,
+	Init: (self: ToolObject) -> (),
+	Destroy: (self: ToolObject) -> (),
+	SetPlayer: (self: ToolObject, player: Player) -> ()
+}
+
+export type ToolConfig = {
+	ToolName: string,
+}
+
+export type ToolObject = typeof(setmetatable({} :: ToolConfig & {
 	Instance: Tool,
 
+	ToolState: EnumState.EnumState,
 	Equipped: boolean,
-	ToolState: EnumList.EnumItem,
-
-	Cooldowns: {[string]: any},
 
 	OnEquipped: Signal.Signal<nil>,
 	OnUnequipped: Signal.Signal<nil>,
-}
-export type ToolObject = typeof(setmetatable({} :: ToolConfig, {} :: typeof(Tool)))
+
+	_DestroyingConnection: RBXScriptConnection?,
+}, {} :: typeof(Tool)))
 
 function Tool.new(config)
 	local self = setmetatable(config, Tool)
 
 	self.Equipped = false
-	self.ToolState = config.ToolState or GameEnums.ToolState.Idle
-
-	self.Cooldowns = {}
+	self.ToolState = EnumState.new(table.unpack(GameEnums.ToolState.OrderedItems))
 
 	self.OnEquipped = Signal.new()
 	self.OnUnequipped = Signal.new()
@@ -83,8 +92,8 @@ function Tool:Destroy()
 end
 
 function Tool:Equip()
-	if self.Equipped or self.ToolState ~= GameEnums.ToolState.Idle then return end
-	self.ToolState = GameEnums.ToolState.Equipping
+	if self.Equipped or self.ToolState:GetState(GameEnums.ToolState.Idle) then return end
+	self.ToolState:SetState(GameEnums.ToolState.Equipping)
 
 	self.Instance.Remotes.Equip:FireServer()
 	self.Instance.Parent = self.Character
@@ -94,12 +103,12 @@ function Tool:Equip()
 	self.CurrentAnim = equipAnim
 	equipAnim:Play()
 	equipAnim.Ended:Once(function()
-		self.ToolState = GameEnums.ToolState.Idle
+		self.ToolState:SetState(GameEnums.ToolState.Idle)
 	end)
 end
 
 function Tool:Unequip()
-	if not self.Equipped or self.ToolState ~= GameEnums.ToolState.Idle then return end
+	if not self.Equipped or self.ToolState:GetState(GameEnums.ToolState.Idle)  then return end
 
 	self.Instance.Remotes.Unequip:FireServer()
 	self.Instance.Parent = self.Player.Backpack

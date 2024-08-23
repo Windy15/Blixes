@@ -1,8 +1,6 @@
---!nonstrict
-
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local EnumList = require(ReplicatedStorage.Modules.General.EnumList)
+local EnumState = require(ReplicatedStorage.Modules.General.EnumState)
 local GameEnums = require(ReplicatedStorage.GameEnums)
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
@@ -32,28 +30,38 @@ local Tool = {
 }
 Tool.__index = Tool
 
-type ToolConfig = {
+type ToolImpl = {
+	__index: ToolImpl,
+	__type: string,
+
+	new: (ToolConfig) -> ToolObject,
+	Init: (self: ToolObject) -> (),
+	Destroy: (self: ToolObject) -> (),
+	SetPlayer: (self: ToolObject, player: Player) -> ()
+}
+
+export type ToolConfig = {
+	ToolName: string,
+}
+
+export type ToolObject = typeof(setmetatable({} :: ToolConfig & {
 	Instance: Tool,
 
 	Equipped: boolean,
-	ToolState: EnumList.EnumItem,
-
+	ToolState: EnumState.EnumState,
 	Cooldowns: {[string]: any},
 
 	OnEquipped: Signal.Signal<nil>,
 	OnUnequipped: Signal.Signal<nil>,
 
 	_DestroyingConnection: RBXScriptConnection?,
-}
-export type ToolObject = typeof(setmetatable({} :: ToolConfig, {} :: typeof(Tool)))
+}, {} :: ToolImpl))
 
-function Tool.new(config)
+function Tool.new(config: ToolConfig)
 	local self = setmetatable(config, Tool)
 
 	self.Equipped = false
-	self.ToolState = GameEnums.ToolState.Idle
-
-	self.Cooldowns = {}
+	self.ToolState = EnumState.new(table.unpack(GameEnums.ToolState.OrderedItems))
 
 	self.OnEquipped = Signal.new()
 	self.OnUnequipped = Signal.new()
@@ -64,7 +72,7 @@ end
 function Tool:Init()
 	local toolFolder = ReplicatedStorage.Tools:FindFirstChild(self.ToolName, true)
 	if not toolFolder then
-		error(string.format("'%s' is not a valid ToolName, or has no tool model", self.ToolName), 2)
+		error(`'{self.ToolName}' is not a valid ToolName, or has no tool model`, 2)
 	end
 	local toolClone = toolFolder.Tool:Clone()
 
@@ -78,7 +86,7 @@ function Tool:Init()
 	Tool.GlobalTools:_AddTool(self)
 
 	self._DestroyingConnection = toolClone.Destroying:Connect(function() -- in case tool instance gets destroyed without object getting destroyed
-		warn("Tool instance destroyed without calling :Destroy() on object")
+		warn(`Tool instance {self.ToolName} destroyed without calling :Destroy() on object`)
 		self:Destroy()
 	end)
 

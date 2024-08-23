@@ -1,18 +1,15 @@
---!strict
-
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local EnumList = require(ReplicatedStorage.Modules.General.EnumList)
+local EnumState = require(ReplicatedStorage.Modules.General.EnumState)
 local GameEnums = require(ReplicatedStorage.GameEnums)
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
-local Stat = require(ReplicatedStorage.Modules.General.Stat)
-local StringUtils = require(ReplicatedStorage.Modules.General.StringUtils)
 local ToolClass = require(ServerScriptService.Tools.Classes.ToolClass)
 
 local Gun = setmetatable({
 	ToolType = "Gun"
-}, ToolClass)
+}, ToolClass) :: GunImpl
 Gun.__index = Gun
 
 type GunImpl = {
@@ -28,30 +25,25 @@ type GunImpl = {
 	ChangeMode: (self: GunObject, firingMode: EnumList.EnumItem) -> ()
 }
 
-type GunConfig = {
-	Damage: Stat.Stat<number>,
-	FireRate: Stat.Stat<number>,
-	ReloadTime: Stat.Stat<number>,
+export type GunConfig = ToolClass.ToolConfig & {
+	Damage: number,
+	FireRate: number,
+	ReloadTime: number,
 
-	GunState: EnumList.EnumItem,
-	FiringModes: {EnumList.EnumItem},
-	CurrentMode: number,
+	FiringMode: EnumState.EnumState,
 
 	OnShot: Signal.Signal<nil>,
 	OnReloading: Signal.Signal<nil>,
-	OnModeChanged: Signal.Signal<nil>,
+	OnModeChanged: Signal.Signal<EnumList.EnumItem>,
 }
-export type GunObject = typeof(setmetatable({} :: GunConfig & ToolClass.ToolObject, {} :: GunImpl))
+export type GunObject = ToolClass.ToolObject & typeof(setmetatable({} :: GunConfig & {
+	GunState: EnumList.EnumItem
+}, {} :: GunImpl))
 
 function Gun.new(config): GunObject
 	local self = setmetatable(ToolClass.new(config), Gun)
-	self.Damage = Stat.new(config.Damage or 0)
-	self.FireRate = Stat.new(config.FireRate or 1)
-	self.ReloadTime = Stat.new(config.ReloadTime or 3)
 
-	self.GunState = GameEnums.GunState.Idle
-	self.FiringModes = config.FiringModes or {GameEnums.GunMode.Semi}
-	self.CurrentMode = config.CurrentMode or 1
+	self.GunState = EnumState.new(table.unpack(GameEnums.GunState.OrderedItems))
 
 	self.OnShot = Signal.new()
 	self.OnReloading = Signal.new()
@@ -65,36 +57,12 @@ function Gun:Init()
 end
 
 function Gun:Reload()
-	if self.Reloading then return end
+	if self.GunState:GetState() == GameEnums.GunState.Reloading then return end
 	self.Reloading = true
 
-	task.delay(self.ReloadTime.Value, function()
+	task.delay(self.ReloadTime, function()
 		self.Reloading = false
 	end)
-end
-
-function Gun:GetMode()
-	return self.FiringModes[self.CurrentMode]
-end
-
-function Gun:SetCurrentMode(index)
-	local mode = self.FiringModes[index]
-	if not self.FiringModes[index] then
-		error(string.format("'%d' is not a valid index in FiringModes for %s", index, StringUtils.formatAddress(self, "Gun")), 2)
-	end
-
-	self.CurrentMode = index
-	self.OnModeChanged:Fire(mode)
-
-	return mode
-end
-
-function Gun:ChangeMode(firingMode)
-	local index = table.find(self.FiringModes, firingMode)
-	if index then
-		return self:SetCurrentMode(index)
-	end
-	return false
 end
 
 return Gun

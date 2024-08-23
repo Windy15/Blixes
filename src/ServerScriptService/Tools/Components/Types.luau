@@ -4,18 +4,23 @@ local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
 local Types = {}
 
+export type Holder = {}
+
 type ShootComponentImpl = {
     __index: ShootComponentImpl,
 
-    new: (holder: any) -> ShootComponent,
+    new: (holder: Holder) -> ShootComponent,
     Fire: (self: ShootComponent, origin: Vector3, direction: Vector3) -> ()
 }
 
-export type ShootComponent = typeof(setmetatable({} ::{
-    Holder: any,
+type ExtraData = {[string]: any}
 
-    OnFired: Signal.Signal<nil>,
-    OnHit: Signal.Signal<RaycastResult>,
+export type ShootComponent = typeof(setmetatable({} ::{
+    Holder: Holder,
+    Replicating: boolean,
+
+    OnFired: Signal.Signal<ExtraData?>,
+    OnHit: Signal.Signal<RaycastResult, ExtraData?>,
 }, {} :: ShootComponentImpl))
 
 return Types

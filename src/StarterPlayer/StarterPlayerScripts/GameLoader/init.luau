@@ -13,8 +13,7 @@ local GameLoader = {
 
 local PreloadFolders = {
     plr.PlayerGui,
-    ReplicatedStorage.Tools,
-    ReplicatedStorage.Projectiles,
+    ReplicatedStorage.Tools.Models,
     workspace.Map,
 }
 

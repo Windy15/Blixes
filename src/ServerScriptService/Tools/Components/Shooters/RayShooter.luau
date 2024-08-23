@@ -9,7 +9,7 @@ local Types = require(ServerScriptService.Tools.Components.Types)
 type RayShooterImpl = {
     __index: RayShooterImpl,
 
-    new: (holder: any, rayParams: RaycastParams?, pierceLimit: number?, ricochetLimit: number?) -> RayShooter,
+    new: (holder: Types.Holder, rayParams: RaycastParams?, pierceLimit: number?, ricochetLimit: number?) -> RayShooter,
     Fire: (self: RayShooter, origin: Vector3, direction: Vector3) -> (),
 }
 

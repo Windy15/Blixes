@@ -39,7 +39,7 @@ export type ProjCaster = typeof(setmetatable({} :: {
 
     OnProjHit: Signal.Signal<Projectile, RaycastResult>,
     OnProjCreated: Signal.Signal<Projectile>,
-    OnProjMoved: Signal.Signal<Projectile, Vector3, Vector3>,
+    OnProjMoved: Signal.Signal<Projectile, Vector3>,
     OnProjDestroyed: Signal.Signal<Projectile>,
 }, {} :: ProjCasterImpl))
 
@@ -48,20 +48,31 @@ export type ProjectileImpl = {
     __type: string,
 
     new: (caster: ProjCaster, origin: Vector3, velocity: Vector3) -> Projectile,
-    ChangeTrajectory: (self: Projectile, velocity: Vector3) -> (),
+    buffToId: (buff: buffer) -> number,
+    idToBuff: (id: number) -> buffer,
+
+    ChangeVelocity: (self: Projectile, velocity: Vector3) -> (),
     ApplyImpulse: (self: Projectile, velocity: Vector3) -> (),
     Destroy: (self: Projectile) -> (),
 }
 
+export type Trajectory = {
+    Origin: Vector3,
+    Next: Trajectory?,
+}
+
 export type Projectile = typeof(setmetatable({} :: {
-    LocalId: number,
+    Id: number,
     Caster: ProjCaster,
     TimeFired: number,
 
     Origin: Vector3,
-    TrajectoryOrigin: Vector3,
+    TrajectoryList: Trajectory,
+    _TrajectoryStepped: boolean, -- If the current trajectory has been used
     Velocity: Vector3,
     Position: Vector3,
+    LastPosition: Vector3,
+    Rotation: Vector3,
 }, {} :: ProjectileImpl))
 
 return TypeHolder

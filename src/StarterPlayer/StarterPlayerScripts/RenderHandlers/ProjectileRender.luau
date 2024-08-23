@@ -4,6 +4,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local PartCache = require(ReplicatedStorage.Modules.Parts.PartCache)
+local Projectile = require(ReplicatedStorage.Modules.Collisions.ProjCaster.Projectile)
 
 local ProjectileRemotes = ReplicatedStorage.Remotes.Projectiles
 
@@ -19,11 +20,13 @@ local ProjectileRender = {
     Renders = table.create(1000) :: {[number]: Render}
 }
 
-function ProjectileRender.createProjectile(projId, projectileFolder)
+function ProjectileRender.createProjectile(projId: buffer, projectileFolder)
+    local id = Projectile.buffToId(projId)
+
     local render = projectileFolder.Render
     local model = PartCache[render] and PartCache[render]:GetPart() or render:Clone()
 
-    ProjectileRender.Renders[projId] = {
+    ProjectileRender.Renders[id] = {
         Model = model,
     }
 
@@ -33,18 +36,20 @@ function ProjectileRender.createProjectile(projId, projectileFolder)
     end
 end
 
-function ProjectileRender.updatePosition(projId: number, cframe: CFrame)
-    local render =  ProjectileRender.Renders[projId]
+function ProjectileRender.updatePosition(projId: buffer, cframe: CFrame)
+    local id = Projectile.buffToId(projId)
+    local render =  ProjectileRender.Renders[id]
     if not render then return end
 
     render.Model:PivotTo(cframe)
 end
 
-function ProjectileRender.removeProjectile(projId)
-    local render = ProjectileRender.Renders[projId]
+function ProjectileRender.removeProjectile(projId: buffer)
+    local id = Projectile.buffToId(projId)
+    local render = ProjectileRender.Renders[id]
     if render then
         render.Model:Destroy()
-        ProjectileRender.Renders[projId] = nil
+        ProjectileRender.Renders[id] = nil
     end
 end
 
@@ -52,7 +57,7 @@ CreateProjectile.OnClientEvent:Connect(ProjectileRender.createProjectile) -- Cre
 do
     local lastPacket = 0
 
-    UpdatePosition.OnClientEvent:Connect(function(timeSent, ...)
+    UpdatePosition.OnClientEvent:Connect(function(timeSent: number, ...)
         if timeSent < lastPacket then return end
         lastPacket = timeSent
 
