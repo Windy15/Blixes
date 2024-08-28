@@ -1,5 +1,3 @@
---!nonstrict
-
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local EnumState = require(ReplicatedStorage.Modules.General.EnumState)
@@ -16,11 +14,12 @@ Gun.__index = Gun
 function Gun.new(config)
 	local self = setmetatable(ToolClass.new(config), Gun)
 
-	self.GunState = EnumState.new(table.unpack(GameEnums.GunState.OrderedItems))
+	self.FiringMode = EnumState.fromIds(self.FiringMode)
+	self.GunState = self.GunState or EnumState.new(table.unpack(GameEnums.GunState.OrderedItems))
 
-	self.OnShot = Signal.new()
-	self.OnReloading = Signal.new()
-	self.OnModeChanged = Signal.new()
+	self.OnShot = self.Cleaner:AddObject(Signal.new())
+	self.OnReloading = self.Cleaner:AddObject(Signal.new())
+	self.OnModeChanged = self.Cleaner:AddObject(Signal.new())
 
 	return self
 end

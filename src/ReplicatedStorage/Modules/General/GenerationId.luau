@@ -1,7 +1,7 @@
 --!native
 --!strict
 
-type object = {}
+type object = any
 type id = number
 
 type GenerationIdImpl = {

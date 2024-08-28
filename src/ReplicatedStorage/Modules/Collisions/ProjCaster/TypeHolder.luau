@@ -72,7 +72,7 @@ export type Projectile = typeof(setmetatable({} :: {
     Velocity: Vector3,
     Position: Vector3,
     LastPosition: Vector3,
-    Rotation: Vector3,
+    Rotation: CFrame,
 }, {} :: ProjectileImpl))
 
 return TypeHolder

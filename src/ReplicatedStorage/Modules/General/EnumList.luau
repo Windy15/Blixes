@@ -135,15 +135,11 @@ function EnumList.new(dict: any, listName: string?): EnumList
 end
 
 function EnumList.toId(enumItem: EnumItem)
-    return string.format("%x", enumItem._Id)
+    return enumItem._Id
 end
 
-function EnumList.fromId(enumId: string)
-    local id = tonumber(enumId, 16)
-    if not id then
-        error(`Invalid id {enumId} for EnumList`, 2)
-    end
-    return EnumIds[id]
+function EnumList.fromId(enumId: number)
+    return EnumIds[enumId]
 end
 
 return EnumList

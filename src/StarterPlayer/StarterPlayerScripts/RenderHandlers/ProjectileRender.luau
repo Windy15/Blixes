@@ -12,21 +12,22 @@ local CreateProjectile = ProjectileRemotes.CreateProjectile
 local UpdatePosition = ProjectileRemotes.UpdatePosition
 local RemoveProjectile = ProjectileRemotes.RemoveProjectile
 
+local RENDERS_INIT_SIZE = 1000
+
 export type Render = {
     Model: Model
 }
 
 local ProjectileRender = {
-    Renders = table.create(1000) :: {[number]: Render}
+    ReplicatedRenders = table.create(RENDERS_INIT_SIZE) :: {[number]: Render},
+    ClientRenders = table.create(RENDERS_INIT_SIZE) :: {[number]: Render}
 }
 
-function ProjectileRender.createProjectile(projId: buffer, projectileFolder)
-    local id = Projectile.buffToId(projId)
-
+function ProjectileRender.createProjectile(projId: number, projectileFolder)
     local render = projectileFolder.Render
     local model = PartCache[render] and PartCache[render]:GetPart() or render:Clone()
 
-    ProjectileRender.Renders[id] = {
+    ProjectileRender.ClientRenders[projId] = {
         Model = model,
     }
 
@@ -36,35 +37,66 @@ function ProjectileRender.createProjectile(projId: buffer, projectileFolder)
     end
 end
 
-function ProjectileRender.updatePosition(projId: buffer, cframe: CFrame)
-    local id = Projectile.buffToId(projId)
-    local render =  ProjectileRender.Renders[id]
+function ProjectileRender.updatePosition(projId: number, cframe: CFrame)
+    local render =  ProjectileRender.ClientRenders[projId]
     if not render then return end
 
     render.Model:PivotTo(cframe)
 end
 
-function ProjectileRender.removeProjectile(projId: buffer)
-    local id = Projectile.buffToId(projId)
-    local render = ProjectileRender.Renders[id]
+function ProjectileRender.removeProjectile(projId: number)
+    local render = ProjectileRender.ClientRenders[projId]
     if render then
         render.Model:Destroy()
-        ProjectileRender.Renders[id] = nil
+        ProjectileRender.ClientRenders[projId] = nil
     end
 end
 
-CreateProjectile.OnClientEvent:Connect(ProjectileRender.createProjectile) -- Create projectile client side
-do
-    local lastPacket = 0
+CreateProjectile.OnClientEvent:Connect(function(projId: buffer, projectileFolder) -- Create projectile client side
+    local id = Projectile.buffToId(projId)
 
-    UpdatePosition.OnClientEvent:Connect(function(timeSent: number, ...)
-        if timeSent < lastPacket then return end
-        lastPacket = timeSent
+    local render = projectileFolder.Render
+    local model = PartCache[render] and PartCache[render]:GetPart() or render:Clone()
 
-        ProjectileRender.updatePosition(...)
-    end)
-end
-UpdatePosition.OnClientEvent:Connect(ProjectileRender.updatePosition) -- Replicate movement of projectile
-RemoveProjectile.OnClientEvent:Connect(ProjectileRender.removeProjectile) -- Destroy projectile
+    ProjectileRender.ReplicatedRenders[id] = {
+        Model = model,
+    }
+
+    local visualEffect = projectileFolder:FindFirstChild("VisualEffect")
+    if visualEffect then
+        visualEffect.applyEffect(model)
+    end
+end)
+
+local lastPacket = 0
+
+UpdatePosition.OnClientEvent:Connect(function(timeSent: number, projId: buffer, cframe: CFrame)
+    if timeSent < lastPacket then return end
+    lastPacket = timeSent
+
+    local id = Projectile.buffToId(projId)
+    local render =  ProjectileRender.ReplicatedRenders[id]
+    if not render then return end
+
+    render.Model:PivotTo(cframe)
+end)
+
+
+UpdatePosition.OnClientEvent:Connect(function(projId: buffer, cframe: CFrame) -- Replicate movement of projectile
+    local id = Projectile.buffToId(projId)
+    local render =  ProjectileRender.ReplicatedRenders[id]
+    if not render then return end
+
+    render.Model:PivotTo(cframe)
+end)
+
+RemoveProjectile.OnClientEvent:Connect(function(projId: buffer) -- Destroy projectile
+    local id = Projectile.buffToId(projId)
+    local render = ProjectileRender.ReplicatedRenders[id]
+    if render then
+        render.Model:Destroy()
+        ProjectileRender.ReplicatedRenders[id] = nil
+    end
+end)
 
 return ProjectileRender

@@ -1,48 +1,28 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local Cleaner = require(ReplicatedStorage.Modules.General.Cleaner)
 local EnumState = require(ReplicatedStorage.Modules.General.EnumState)
 local GameEnums = require(ReplicatedStorage.GameEnums)
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
-local _GlobalToolsMeta = {
-	__mode = "k", -- dont hold references to dead instances
-
-	_AddTool = function(self, tool)
-		self[tool.Instance] = tool
-		self.OnToolAdded:Fire(tool)
-	end,
-	_RemoveTool = function(self, tool)
-		if self[tool.Instance] then
-			self[tool.Instance] = nil
-			self.OnToolRemoved:Fire(tool)
-		end
-	end,
-
-	OnToolAdded = Signal.new(),
-	OnToolRemoved = Signal.new()
-}
-_GlobalToolsMeta.__index = _GlobalToolsMeta
-local GlobalTools = setmetatable({}, _GlobalToolsMeta)
-
 local Tool = {
-	GlobalTools = GlobalTools,
-	__type = "Tool"
-}
+	__type = "Tool",
+	ToolName = "DefaultTool",
+} :: ToolImpl
 Tool.__index = Tool
 
 type ToolImpl = {
 	__index: ToolImpl,
 	__type: string,
+	ToolName: string,
 
-	new: (ToolConfig) -> ToolObject,
+	new: (config: ToolConfig) -> ToolObject,
 	Init: (self: ToolObject) -> (),
 	Destroy: (self: ToolObject) -> (),
 	SetPlayer: (self: ToolObject, player: Player) -> ()
 }
 
-export type ToolConfig = {
-	ToolName: string,
-}
+export type ToolConfig = {}
 
 export type ToolObject = typeof(setmetatable({} :: ToolConfig & {
 	Instance: Tool,
@@ -53,8 +33,8 @@ export type ToolObject = typeof(setmetatable({} :: ToolConfig & {
 	OnEquipped: Signal.Signal<nil>,
 	OnUnequipped: Signal.Signal<nil>,
 
-	_DestroyingConnection: RBXScriptConnection?,
-}, {} :: typeof(Tool)))
+	Cleaner: Cleaner.Cleaner,
+}, {} :: ToolImpl))
 
 function Tool.new(config)
 	local self = setmetatable(config, Tool)
@@ -62,8 +42,10 @@ function Tool.new(config)
 	self.Equipped = false
 	self.ToolState = EnumState.new(table.unpack(GameEnums.ToolState.OrderedItems))
 
-	self.OnEquipped = Signal.new()
-	self.OnUnequipped = Signal.new()
+	self.Cleaner = Cleaner.new()
+
+	self.OnEquipped = self.Cleaner:AddObject(Signal.new())
+	self.OnUnequipped = self.Cleaner:AddObject(Signal.new())
 
 	if self.Instance then -- create guns by default on client
 		self:Create()
@@ -74,19 +56,14 @@ end
 
 function Tool:Init()
 	assert(self.Instance, "Attempt to create tool with no instance")
-	Tool.GlobalTools:_AddTool(self)
-	self._DestroyingConnection = self.Instance.Destroying:Connect(function() -- in case tool instance gets destroyed without object getting destroyed
+	self.Cleaner:AddObject(self.Instance.Destroying:Connect(function() -- in case tool instance gets destroyed without object getting destroyed
 		self:Destroy()
-	end)
+	end))
 end
 
 function Tool:Destroy()
-	if self._DestroyingConnection then
-		self._DestroyingConnection:Disconnect()
-		self._DestroyingConnection = nil
-	end
+	self.Cleaner:Finish()
 	if self.Instance then
-		Tool.GlobalTools:_RemoveTool(self)
 		self.Instance:Destroy()
 	end
 end

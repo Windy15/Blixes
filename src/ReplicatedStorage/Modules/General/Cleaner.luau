@@ -6,7 +6,7 @@ type DestroyableMeta = {
     Destroy: (self: Destroyable) -> (),
 }
 
-export type Destroyable = typeof(setmetatable({}, {} :: DestroyableMeta))
+type Destroyable = typeof(setmetatable({}, {} :: DestroyableMeta))
 
 export type Cleanable = thread | RBXScriptConnection | Instance | Destroyable
 
@@ -17,7 +17,7 @@ type CleanerImpl = {
     __type: string,
 
     new: (...Cleanable) -> Cleaner,
-    AddObject: (self: Cleaner, t: Cleanable | func) -> (),
+    AddObject: <T>(self: Cleaner, t: T) -> T,
     RemoveObject: (self: Cleaner, t: Cleanable) -> boolean,
     RunThreads: (self: Cleaner, ...any?) -> (),
     DeferThreads: (self: Cleaner, ...any?) -> (),
@@ -43,13 +43,14 @@ function Cleaner.new(...)
     return self
 end
 
-function Cleaner:AddObject(t)
+function Cleaner:AddObject<T>(t: T): T
     if type(t) == "function" then
         local thread = coroutine.create(t)
         table.insert(self.Objects, thread)
     else
-        table.insert(self.Objects, t)
+        table.insert(self.Objects, t :: any)
     end
+    return t
 end
 
 function Cleaner:RemoveObject(t)

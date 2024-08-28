@@ -9,7 +9,7 @@ local TypeHolder = require(script.Parent.TypeHolder)
 
 local PROJ_INIT_SIZE = 1000
 
-local ProjIdGen = RunService:IsServer() and GenerationId.new(PROJ_INIT_SIZE)
+local ProjIdGen = GenerationId.new(PROJ_INIT_SIZE)
 local GlobalProjectiles = table.create(PROJ_INIT_SIZE)
 
 local Projectile = {} :: TypeHolder.ProjectileImpl
@@ -27,13 +27,12 @@ function Projectile.new(caster, origin, velocity)
         Velocity = velocity,
         Position = origin,
         LastPosition = origin,
-        Rotation = Vector3.zero,
+        Rotation = CFrame.identity,
     }, Projectile)
-    if ProjIdGen then
-        local id = ProjIdGen:CreateId(self)
-        self.Id = id
-        GlobalProjectiles[id] = self
-    end
+
+    local id = ProjIdGen:CreateId(self)
+    self.Id = id
+    GlobalProjectiles[id] = self
 
     return self
 end

@@ -12,6 +12,9 @@ type EnumStateImpl = {
     PreviousState: (self: EnumState) -> EnumList.EnumItem,
     NextState: (self: EnumState) -> EnumList.EnumItem,
     SetState: (self: EnumState, EnumList.EnumItem) -> (),
+
+    toIds: (state: EnumState) -> buffer,
+    fromIds: (idbuff: buffer) -> EnumState,
 }
 
 export type EnumState = typeof(setmetatable({} :: {
@@ -54,6 +57,24 @@ function EnumState:SetState(state: EnumList.EnumItem)
         error(`Invalid state {state} for EnumState`, 2)
     end
     self._Current = index
+end
+
+local ID_SIZE = 2
+
+function EnumState.toIds(state)
+    local buff = buffer.create(#state.States * ID_SIZE)
+    for i, item in state.States do
+        buffer.writeu16(buff, i - 1, EnumList.toId(item))
+    end
+    return buff
+end
+
+function EnumState.fromIds(idbuff)
+    local states = {}
+    for i = 0, buffer.len(idbuff) - 1, ID_SIZE do
+        table.insert(states, EnumList.fromId(buffer.readu16(idbuff, i)))
+    end
+    return EnumState.new(table.unpack(states))
 end
 
 return EnumState
