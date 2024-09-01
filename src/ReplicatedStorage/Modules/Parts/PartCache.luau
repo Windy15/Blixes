@@ -1,13 +1,12 @@
 --!native
---!nonstrict
 
 local CACHE_CFRAME = CFrame.new(1e6, 1e6, 1e6)
 local CACHE_TAG = "CACHED_PARTCACHE"
 
 export type PartCache = {
     CreatePool: (self: PartCache, poolKey: any, part: BasePart?) -> CachePool,
+    GetPool: (self: PartCache, poolKey: any) -> CachePool?,
     IsCached: (self: PartCache, part: BasePart) -> boolean,
-    [any]: CachePool,
 }
 
 type CachePoolImpl = {
@@ -22,10 +21,11 @@ export type CachePool = typeof(setmetatable({} :: {
 }, {} :: CachePoolImpl))
 
 local PartCache = {} :: PartCache
+local Pools = {}
 local CachePool = {} :: CachePoolImpl
 
 function PartCache:CreatePool(poolKey: any, part: BasePart?)
-    if PartCache[poolKey] then
+    if Pools[poolKey] then
         error(`CachePool '{poolKey}' already exists`, 2)
     end
 
@@ -40,9 +40,13 @@ function PartCache:CreatePool(poolKey: any, part: BasePart?)
     local pool = setmetatable({
         Part = part
     }, CachePool)
-    PartCache[poolKey] = pool :: CachePool
+    Pools[poolKey] = pool :: CachePool
 
     return pool
+end
+
+function PartCache:GetPool(poolKey: any)
+    return Pools[poolKey]
 end
 
 function PartCache:IsCached(part: BasePart)

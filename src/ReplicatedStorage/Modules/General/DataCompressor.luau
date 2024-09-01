@@ -44,9 +44,9 @@ function DataCompressor.Encoders.Color3(cols: {Color3}): buffer
     local data = buffer.create(#cols * COL_SIZE)
     for i, col in ipairs(cols) do
         local offset = (i - 1) * COL_SIZE
-        buffer.writef32(data, offset, col.R * 255)
-        buffer.writef32(data, offset + 1, col.G * 255)
-        buffer.writef32(data, offset + 2, col.B * 255)
+        buffer.writeu8(data, offset, col.R * 255)
+        buffer.writeu8(data, offset + 1, col.G * 255)
+        buffer.writeu8(data, offset + 2, col.B * 255)
     end
     return data
 end
@@ -54,10 +54,10 @@ end
 function DataCompressor.Decoders.Color3(data: buffer): {Color3}
     local cols = table.create(buffer.len(data) / COL_SIZE)
     for i = 0, buffer.len(data) - 1, COL_SIZE do
-        local col = Color3.new(
-            buffer.readf32(data, i),
-            buffer.readf32(data, i + 1),
-            buffer.readf32(data, i + 2)
+        local col = Color3.fromRGB(
+            buffer.readu8(data, i),
+            buffer.readu8(data, i + 1),
+            buffer.readu8(data, i + 2)
         )
         table.insert(cols, col)
     end
@@ -106,10 +106,10 @@ end
 -----------------------------------------------
 
 function DataCompressor.Encoders.boolean(bools: {boolean}): buffer
-	local arrayLength: number = #bools
-	local data: buffer = buffer.create(math.ceil(arrayLength / 8))
+	local arrayLength = #bools
+	local data = buffer.create(math.ceil(arrayLength / 8))
 
-	local byte: number = 0
+	local byte = 0
 
 	for offset: number, bool: boolean in ipairs(bools) do
 		if bool then

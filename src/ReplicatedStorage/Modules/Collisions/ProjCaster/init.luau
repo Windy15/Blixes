@@ -14,7 +14,7 @@ local DEFAULT_RAY_PARAMS = RaycastParams.new()
 DEFAULT_RAY_PARAMS.RespectCanCollide = true
 
 local DefaultCalc = function(self, proj)
-    return workspace:Raycast(proj.Origin, proj.Velocity, self.RayParams)
+    return workspace:Raycast(proj.InitialOrigin, proj.Velocity, self.RayParams)
 end :: TypeHolder.CalculateHit
 
 function ProjCaster.new(config: TypeHolder.ProjConfig)
@@ -24,7 +24,7 @@ function ProjCaster.new(config: TypeHolder.ProjConfig)
 
         Gravity = if config.Gravity then
                     (if type(config.Gravity) == "number" then Vector3.yAxis * config.Gravity else config.Gravity)
-                else workspace.Gravity * Vector3.yAxis,
+                else -workspace.Gravity * Vector3.yAxis,
 
         CalculateHit = config.CalculateHit or DefaultCalc, -- Can be overriden to use any other hit detection method
 

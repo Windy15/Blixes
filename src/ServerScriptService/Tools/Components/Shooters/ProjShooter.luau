@@ -1,5 +1,6 @@
 --!strict
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -15,7 +16,7 @@ local RemoveProjectileRemote = ReplicatedStorage.Remotes.Projectiles.RemoveProje
 type ProjShooterImpl = {
     __index: ProjShooterImpl,
 
-    new: (holder: Types.Holder, caster: ProjTypes.ProjCaster, visualsFolder: Folder?) -> ProjShooter,
+    new: (holder: Types.Holder, caster: ProjTypes.ProjCaster, visualsFolder: Folder?, replicateBlacklist: {Player}?) -> ProjShooter,
     Fire: (self: ProjShooter, origin: Vector3, direction: Vector3) -> (),
 }
 
@@ -47,8 +48,13 @@ function ProjShooter.new(holder, caster, visualsFolder)
     end)
 
     if visualsFolder then
-        caster.OnProjMoved:Connect(function(proj, pos)
-            UpdatePositionRemote:FireAllClients(os.clock(), Projectile.idToBuff(proj.Id), CFrame.new(pos) * proj.Rotation)
+        caster.OnProjMoved:Connect(function(proj)
+            local timeCreated = os.clock()
+            for _, player in Players:GetPlayers() do
+                if player ~= holder.Player then
+                    UpdatePositionRemote:FireClient(player, timeCreated, Projectile.idToBuff(proj.Id), proj:GetPivot())
+                end
+            end
         end)
     end
 

@@ -1,10 +1,14 @@
+--!strict
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
 local Types = {}
 
-export type Holder = {}
+export type Holder = {
+    Player: Player
+}
 
 type ShootComponentImpl = {
     __index: ShootComponentImpl,

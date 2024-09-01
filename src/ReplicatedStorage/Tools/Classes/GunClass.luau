@@ -19,7 +19,6 @@ function Gun.new(config)
 
 	self.OnShot = self.Cleaner:AddObject(Signal.new())
 	self.OnReloading = self.Cleaner:AddObject(Signal.new())
-	self.OnModeChanged = self.Cleaner:AddObject(Signal.new())
 
 	return self
 end
@@ -29,7 +28,7 @@ function Gun:Init()
 end
 
 function Gun:Reload()
-	if self.GunState:GetState() ~= GameEnums.GunState.Idle then return end
+	if not self.GunState:IsState(GameEnums.GunState.Idle) then return end
 	self.GunState:SetState(GameEnums.GunState.Reloading)
 
 	local reloadAnim = self.Player.Character:LoadAnimation(self.Instance.Animations.ReloadAnimation)

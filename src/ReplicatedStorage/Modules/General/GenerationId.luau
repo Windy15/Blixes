@@ -16,6 +16,8 @@ type GenerationIdImpl = {
 }
 
 export type GenerationId = typeof(setmetatable({} :: {
+    ObjCount: number,
+
     _opensize: number,
     _openindexes: {number},
     _objects: {[id]: object},
@@ -27,6 +29,7 @@ GenerationId.__index = GenerationId
 
 function GenerationId.new(initsize)
     local self = setmetatable({
+        ObjCount = 0,
         _opensize = 0,
         _openindexes = table.create(initsize or 0),
         _objects = table.create(initsize or 0),
@@ -54,6 +57,7 @@ function GenerationId:CreateId(object)
     end
     self._objects[id] = object
     self._ids[object] = id
+    self.ObjCount += 1
     return id
 end
 
@@ -81,6 +85,7 @@ function GenerationId:RemoveId(object)
         local openId = self._opensize + 1
         self._openindexes[openId] = id
         self._opensize = openId
+        self.ObjCount -= 1
     end
 end
 

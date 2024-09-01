@@ -14,18 +14,23 @@ local RemoveProjectile = ProjectileRemotes.RemoveProjectile
 
 local RENDERS_INIT_SIZE = 1000
 
-export type Render = {
+export type ClientRender = {
     Model: Model
 }
 
+export type ReplicatedRender = ClientRender & {
+    LastPacket: number
+}
+
 local ProjectileRender = {
-    ReplicatedRenders = table.create(RENDERS_INIT_SIZE) :: {[number]: Render},
-    ClientRenders = table.create(RENDERS_INIT_SIZE) :: {[number]: Render}
+    ReplicatedRenders = table.create(RENDERS_INIT_SIZE) :: {[number]: ReplicatedRender},
+    ClientRenders = table.create(RENDERS_INIT_SIZE) :: {[number]: ClientRender}
 }
 
 function ProjectileRender.createProjectile(projId: number, projectileFolder)
     local render = projectileFolder.Render
-    local model = PartCache[render] and PartCache[render]:GetPart() or render:Clone()
+    local pool = PartCache:GetPool(render)
+    local model = if pool then pool:GetPart() else render:Clone()
 
     ProjectileRender.ClientRenders[projId] = {
         Model = model,
@@ -33,12 +38,12 @@ function ProjectileRender.createProjectile(projId: number, projectileFolder)
 
     local visualEffect = projectileFolder:FindFirstChild("VisualEffect")
     if visualEffect then
-        visualEffect.applyEffect(model)
+        visualEffect.applyCreated(model)
     end
 end
 
 function ProjectileRender.updatePosition(projId: number, cframe: CFrame)
-    local render =  ProjectileRender.ClientRenders[projId]
+    local render = ProjectileRender.ClientRenders[projId]
     if not render then return end
 
     render.Model:PivotTo(cframe)
@@ -52,35 +57,35 @@ function ProjectileRender.removeProjectile(projId: number)
     end
 end
 
+
 CreateProjectile.OnClientEvent:Connect(function(projId: buffer, projectileFolder) -- Create projectile client side
     local id = Projectile.buffToId(projId)
 
     local render = projectileFolder.Render
-    local model = PartCache[render] and PartCache[render]:GetPart() or render:Clone()
+    local pool = PartCache:GetPool(render)
+    local model = if pool then pool:GetPart() else render:Clone()
 
     ProjectileRender.ReplicatedRenders[id] = {
         Model = model,
+        LastPacket = 0,
     }
 
     local visualEffect = projectileFolder:FindFirstChild("VisualEffect")
     if visualEffect then
-        visualEffect.applyEffect(model)
+        visualEffect.applyCreated(model)
     end
 end)
 
-local lastPacket = 0
-
 UpdatePosition.OnClientEvent:Connect(function(timeSent: number, projId: buffer, cframe: CFrame)
-    if timeSent < lastPacket then return end
-    lastPacket = timeSent
-
     local id = Projectile.buffToId(projId)
     local render =  ProjectileRender.ReplicatedRenders[id]
     if not render then return end
 
+    if timeSent < render.LastPacket then return end
+    render.LastPacket = timeSent
+
     render.Model:PivotTo(cframe)
 end)
-
 
 UpdatePosition.OnClientEvent:Connect(function(projId: buffer, cframe: CFrame) -- Replicate movement of projectile
     local id = Projectile.buffToId(projId)

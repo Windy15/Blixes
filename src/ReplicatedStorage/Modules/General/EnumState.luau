@@ -9,6 +9,7 @@ type EnumStateImpl = {
 
     new: (...EnumList.EnumItem) -> EnumState,
     GetState: (self: EnumState) -> EnumList.EnumItem,
+    IsState: (self: EnumState, state: EnumList.EnumItem) -> boolean,
     PreviousState: (self: EnumState) -> EnumList.EnumItem,
     NextState: (self: EnumState) -> EnumList.EnumItem,
     SetState: (self: EnumState, EnumList.EnumItem) -> (),
@@ -41,6 +42,10 @@ end
 
 function EnumState:GetState()
     return self.States[self._Current]
+end
+
+function EnumState:IsState(state)
+    return self.States[self._Current] == state
 end
 
 function EnumState:PreviousState()

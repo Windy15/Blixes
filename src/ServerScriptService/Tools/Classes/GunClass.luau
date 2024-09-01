@@ -48,7 +48,6 @@ export type GunObject = ToolClass.ToolObject & typeof(setmetatable({} :: GunConf
 
 	OnShot: Signal.Signal<nil>,
 	OnReloading: Signal.Signal<nil>,
-	OnModeChanged: Signal.Signal<EnumList.EnumItem>,
 }, {} :: GunImpl))
 
 
@@ -59,7 +58,6 @@ function Gun.new(config): GunObject
 
 	self.OnShot = self.Cleaner:AddObject(Signal.new())
 	self.OnReloading = self.Cleaner:AddObject(Signal.new())
-	self.OnModeChanged = self.Cleaner:AddObject(Signal.new())
 
 	if self._CreateDamageConnection then
 		self.Shooter.OnHit:Connect(function(result)
@@ -86,7 +84,7 @@ function Gun:GetReplicateConfig()
 end
 
 function Gun:Reload()
-	if self.GunState:GetState() == GunState.Reloading then return end
+	if not self.GunState:IsState(GunState.Idle) then return end
 	self.GunState:SetState(GunState.Reloading)
 
 	self.Cleaner:AddObject(task.delay(self.ReloadTime, function()

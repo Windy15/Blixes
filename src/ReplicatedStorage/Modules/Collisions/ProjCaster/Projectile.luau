@@ -17,16 +17,19 @@ Projectile.__index = Projectile
 Projectile.__type = "Projectile"
 
 function Projectile.new(caster, origin, velocity)
+    local timeCreated = os.clock()
     local self = setmetatable({
         Caster = caster,
-        TimeFired = os.clock(),
+        TimeCreated = timeCreated,
 
-        Origin = origin,
-        TrajectoryList = {Origin = origin, Next = nil},
-        _TrajectoryStepped = false,
+        InitialOrigin = origin,
+        TrajectoryList = {Origin = origin, StartTime = timeCreated, Next = nil},
+        _TrajectoryStepped = false, -- If the current trajectory has been used
+
         Velocity = velocity,
         Position = origin,
         LastPosition = origin,
+
         Rotation = CFrame.identity,
     }, Projectile)
 
@@ -51,6 +54,7 @@ function Projectile:ChangeVelocity(velocity: Vector3)
     if self._TrajectoryStepped then
         self.TrajectoryList = {
             Origin = self.Position,
+            StartTime = os.clock(),
             Next = self.TrajectoryList,
         }
     end
@@ -59,6 +63,10 @@ end
 
 function Projectile:ApplyImpulse(velocity: Vector3)
     self:ChangeVelocity(self.Velocity + velocity)
+end
+
+function Projectile:GetPivot()
+    return CFrame.new(self.Position) * self.Rotation
 end
 
 function Projectile:Destroy()
@@ -72,6 +80,10 @@ end
 
 local function calculatePosition(gravity: Vector3, velocity: Vector3, initPos: Vector3, time: number)
 	return 0.5 * gravity * time ^ 2 + velocity * time + initPos
+end
+
+local function calculateVelocity(gravity: Vector3, position: Vector3, initPos: Vector3, time: number)
+	return (-0.5 * gravity * time ^ 2 - initPos) / time
 end
 
 RunService.PreSimulation:Connect(function()
@@ -88,8 +100,9 @@ RunService.PreSimulation:Connect(function()
         end
 
         local oldpos = proj.Position
+        local currentTraj = proj.TrajectoryList
+        local newpos = calculatePosition(caster.Gravity, proj.Velocity, currentTraj.Origin, os.clock() - currentTraj.StartTime)
         proj.LastPosition = oldpos
-        local newpos = calculatePosition(caster.Gravity, proj.Velocity, proj.TrajectoryList.Origin, os.clock() - proj.TimeFired)
         proj.Position = newpos
 
         proj._TrajectoryStepped = true

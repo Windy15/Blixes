@@ -44,8 +44,8 @@ function ProjShooter.new(holder, caster, visualsFolder)
     end)
 
     if visualsFolder then
-        caster.OnProjMoved:Connect(function(proj, pos)
-            ProjectileRender.updatePosition(proj.Id, CFrame.new(pos) * proj.Rotation)
+        caster.OnProjMoved:Connect(function(proj)
+            ProjectileRender.updatePosition(proj.Id, proj:GetPivot())
         end)
     end
 

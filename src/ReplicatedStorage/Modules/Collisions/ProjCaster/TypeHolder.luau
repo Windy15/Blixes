@@ -53,25 +53,29 @@ export type ProjectileImpl = {
 
     ChangeVelocity: (self: Projectile, velocity: Vector3) -> (),
     ApplyImpulse: (self: Projectile, velocity: Vector3) -> (),
+    GetPivot: (self: Projectile) -> CFrame,
     Destroy: (self: Projectile) -> (),
 }
 
 export type Trajectory = {
     Origin: Vector3,
+    StartTime: number,
     Next: Trajectory?,
 }
 
 export type Projectile = typeof(setmetatable({} :: {
     Id: number,
     Caster: ProjCaster,
-    TimeFired: number,
+    TimeCreated: number,
 
-    Origin: Vector3,
+    InitialOrigin: Vector3,
     TrajectoryList: Trajectory,
-    _TrajectoryStepped: boolean, -- If the current trajectory has been used
+    _TrajectoryStepped: boolean,
+
     Velocity: Vector3,
     Position: Vector3,
     LastPosition: Vector3,
+
     Rotation: CFrame,
 }, {} :: ProjectileImpl))
 
