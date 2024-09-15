@@ -1,3 +1,4 @@
+--!native
 --!strict
 
 local RunService = game:GetService("RunService")
@@ -25,7 +26,7 @@ export type Countdown = typeof(setmetatable({} :: {
     _SimulationEvent: RBXScriptSignal,
 }, {} :: CountdownImpl))
 
-local Countdown = {}
+local Countdown = {} :: CountdownImpl
 Countdown.__index = Countdown
 Countdown.__type = "Countdown"
 
@@ -47,7 +48,7 @@ function Countdown.new(start: number, finish: number, roundTo: number?, onTick: 
 end
 
 local function getTime(start: number, finish: number, timeRan: number)
-    return start < finish and start + timeRan or start - timeRan
+    return if start < finish then start + timeRan else start - timeRan
 end
 
 function Countdown:Start()
@@ -67,13 +68,14 @@ function Countdown:Start()
 
         if runTime - deltaTime >= totalTime then
             self:Stop()
-        elseif roundedTime ~= lastTime and (runTime - deltaTime <= roundedTime and runTime + deltaTime >= roundedTime) then
+        elseif roundedTime ~= lastTime then
             lastTime = roundedTime
+            local currentTIme = getTime(self.StartTime, self.FinishTime, roundedTime)
             if self.OnTick then
-                self.OnTick(getTime(self.StartTime, self.FinishTime, roundedTime))
+                self.OnTick(currentTIme)
             end
             if self.OnTickEvent then
-                self.OnTickEvent:Fire(getTime(self.StartTime, self.FinishTime, roundedTime))
+                self.OnTickEvent:Fire(currentTIme)
             end
         end
     end)

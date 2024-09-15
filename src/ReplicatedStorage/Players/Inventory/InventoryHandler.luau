@@ -9,6 +9,8 @@ local Mouse = Players.LocalPlayer:GetMouse()
 local ClientData = require(ReplicatedStorage.Players.PlayerData)[Players.LocalPlayer]
 local ToolClass = require(ReplicatedStorage.Tools.Classes.ToolClass)
 
+local inventory = ClientData.Inventory
+
 local RemotesInventory = ReplicatedStorage.Remotes.PlayerData.Inventory
 
 local InventoryHandler = {
@@ -41,10 +43,7 @@ local SlotKeys: {EnumItem} = {
 ]]
 local BindedTools: {[number]: ToolClass.ToolObject} = table.create(#SlotKeys)
 
-local function equipTool(_, inputState: EnumItem, inputObject: InputObject)
-    local inventory = ClientData.Inventory
-    if not inventory then return end
-
+local function equipToolOnInput(_, inputState: EnumItem, inputObject: InputObject)
     if inputState == Enum.UserInputState.Begin then
         local bindIndex = table.find(SlotKeys, inputObject.KeyCode)
         if bindIndex then
@@ -65,12 +64,9 @@ local function getBindedIndex(tool: ToolClass.ToolObject): number?
     return nil
 end
 
-ContextActionService:BindAction(InventoryHandler.Actions.EQUIP, equipTool, false, table.unpack(SlotKeys))
+ContextActionService:BindAction(InventoryHandler.Actions.EQUIP, equipToolOnInput, false, table.unpack(SlotKeys))
 
 Mouse.WheelForward:Connect(function()
-    local inventory = ClientData.Inventory
-    if not inventory then return end
-
     local index = getBindedIndex(inventory.SlotEquipped)
     if index then
         -- Go from the current tool to the first tool
@@ -91,9 +87,6 @@ Mouse.WheelForward:Connect(function()
 end)
 
 Mouse.WheelBackward:Connect(function()
-    local inventory = ClientData.Inventory
-    if not inventory then return end
-
     local index = getBindedIndex(inventory.SlotEquipped)
     if index then
         -- Go from the current tool to the last tool
@@ -114,28 +107,36 @@ Mouse.WheelBackward:Connect(function()
 end)
 
 RemotesInventory.InventoryCreated.OnClientEvent:Connect(function(capacity: number)
-    ClientData.Inventory.Capacity = capacity
+    inventory.Capacity = capacity
 end)
 
 RemotesInventory.ToolAdded.OnClientEvent:Connect(function(tool, slotIndex: number)
-    ClientData.Inventory[slotIndex] = tool
+    inventory[slotIndex] = tool
 
     for i in ipairs(SlotKeys) do
         if not BindedTools[i] then
             BindedTools[i] = tool
         end
     end
+
+    inventory.OnToolAdded:Fire(tool)
 end)
 
 RemotesInventory.ToolRemoved.OnClientEvent:Connect(function(slotIndex: number)
-    local tool = ClientData.Inventory[slotIndex]
+    local tool = inventory[slotIndex]
 
     local index = getBindedIndex(tool)
     if index then
         BindedTools[index] = nil
     end
 
-    ClientData.Inventory[slotIndex] = nil
+    if inventory.SlotEquipped == tool then
+        inventory.SlotEquipped = nil
+    end
+
+    inventory.Tools[slotIndex] = nil
+
+    inventory.OnToolRemoved:Fire(tool)
 end)
 
 return InventoryHandler

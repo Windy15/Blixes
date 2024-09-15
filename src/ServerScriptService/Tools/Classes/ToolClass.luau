@@ -32,7 +32,7 @@ local Tool = {
 } :: ToolImpl
 Tool.__index = Tool
 
-type ToolImpl = {
+export type ToolImpl = {
 	__index: ToolImpl,
 	__type: string,
 	ToolName: string,
@@ -48,8 +48,9 @@ type ToolImpl = {
 
 export type ToolConfig = {}
 
-export type ToolObject = typeof(setmetatable({} :: ToolConfig & {
+export type ToolObject = ToolConfig & typeof(setmetatable({} :: {
 	Instance: Tool,
+	Player: Player,
 
 	Equipped: boolean,
 	ToolState: EnumState.EnumState,
@@ -62,7 +63,7 @@ export type ToolObject = typeof(setmetatable({} :: ToolConfig & {
 }, {} :: ToolImpl))
 
 function Tool.new(config: ToolConfig)
-	local self = setmetatable(config, Tool)
+	local self = setmetatable(config, Tool) :: ToolObject
 
 	self.Equipped = false
 	self.ToolState = EnumState.new(table.unpack(GameEnums.ToolState.OrderedItems))
@@ -116,7 +117,7 @@ function Tool:SetPlayer(player)
 
 	if player then
 		if self.Instance then
-			self.Instance.Remotes.ReplicateObject:FireClient(player, self.ToolName, self:GetReplicateConfig())
+			self.Instance.ReplicateObject:FireClient(player, self.ToolName, self:GetReplicateConfig())
 		end
 
 		if self.Instance.Parent ~= player.Backpack and self.Instance.Parent ~= player.Character then

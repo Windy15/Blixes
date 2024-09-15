@@ -90,7 +90,16 @@ RunService.PreSimulation:Connect(function()
     for _, proj in GlobalProjectiles do
         local caster = proj.Caster
 
+        local oldpos = proj.Position
+        local currentTraj = proj.TrajectoryList
+
+        local gravity, velocity, origin, startTime = caster.Gravity, proj.Velocity, currentTraj.Origin, currentTraj.StartTime
+
+        --desync
         local hit = caster:CalculateHit(proj)
+        local newpos = calculatePosition(gravity, velocity, origin, os.clock() - startTime)
+        --sync
+
         if hit then
             caster.OnProjHit:Fire(proj, hit)
             if caster.DestroyOnHit then
@@ -99,9 +108,6 @@ RunService.PreSimulation:Connect(function()
             end
         end
 
-        local oldpos = proj.Position
-        local currentTraj = proj.TrajectoryList
-        local newpos = calculatePosition(caster.Gravity, proj.Velocity, currentTraj.Origin, os.clock() - currentTraj.StartTime)
         proj.LastPosition = oldpos
         proj.Position = newpos
 

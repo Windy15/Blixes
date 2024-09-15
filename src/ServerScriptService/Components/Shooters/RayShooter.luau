@@ -1,9 +1,10 @@
 --!strict
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
 
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
-local Types = require(ReplicatedStorage.Tools.Components.Types)
+local Types = require(ServerScriptService.Components.Types)
 
 type RayShooterImpl = {
     __index: RayShooterImpl,

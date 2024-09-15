@@ -5,7 +5,7 @@ local EnumState = require(ReplicatedStorage.Modules.General.EnumState)
 local GameEnums = require(ReplicatedStorage.GameEnums)
 local GunClass = require(ServerScriptService.Tools.Classes.GunClass)
 local ProjCaster = require(ReplicatedStorage.Modules.Collisions.ProjCaster)
-local ProjShooter = require(ServerScriptService.Tools.Components.Shooters.ProjShooter)
+local ProjShooter = require(ServerScriptService.Components.Shooters.ProjShooter)
 
 local Bullet = ReplicatedStorage.Visuals.Projectiles.Bullet
 

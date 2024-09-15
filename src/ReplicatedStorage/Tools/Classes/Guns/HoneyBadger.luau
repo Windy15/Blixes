@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local GunClass = require(ReplicatedStorage.Tools.Classes.GunClass)
 local ProjCaster = require(ReplicatedStorage.Modules.Collisions.ProjCaster)
-local ProjShooter = require(ReplicatedStorage.Tools.Components.Shooters.ProjShooter)
+local ProjShooter = require(ReplicatedStorage.Components.Shooters.ProjShooter)
 
 local Bullet = ReplicatedStorage.Visuals.Projectiles.Bullet
 

@@ -2,8 +2,6 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Stat = require(ReplicatedStorage.Modules.General.Stat)
-
 local ReplicationRemote: UnreliableRemoteEvent = ReplicatedStorage.Remotes.ObjectReplication
 
 type object = {[any]: any}
@@ -21,11 +19,7 @@ local Replicator = {
     IdToObject = setmetatable({}, {__mode = "v"}),
 } :: Replicator
 
-local ClassDeserializers = {
-    ["Stat"] = function(value: number)
-        return Stat.new(value)
-    end,
-}
+local ClassDeserializers = {}
 
 ReplicationRemote.OnClientEvent:Connect(function(objId: string, property: string, value: any, typename: string?)
     local object = Replicator.IdToObject[objId]

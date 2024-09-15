@@ -51,7 +51,7 @@ end
 function Inventory:UnequipCurrent()
     local current = self.SlotEquipped
     if current then
-        current:Unequip()
+        current:Equip()
         self.SlotEquipped = nil
         self.OnUnequipped:Fire(current)
         return true

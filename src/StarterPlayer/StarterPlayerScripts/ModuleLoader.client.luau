@@ -3,7 +3,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local StudioDebug = require(ReplicatedStorage.Modules.General.StudioDebug)
+local Logger = require(ReplicatedStorage.Modules.General.Logger)
 
 local ClientScripts = Players.LocalPlayer.PlayerScripts
 
@@ -29,14 +29,14 @@ local LoadModuleFolders : {Folder | ModuleScript} = {
     ReplicatedStorage.Tools,
 }
 
-StudioDebug.log("LOADING MODULES")
-StudioDebug.log("------------------------------------------")
+Logger.info("LOADING MODULES")
+Logger.info("------------------------------------------")
 
 for _, folder in ipairs(LoadModuleFolders) do
 	local start = os.clock()
     requireFolder(folder)
 	local finish = os.clock()
-	StudioDebug.log(string.format("%s: %g", folder.Name, finish - start))
+	Logger.info(string.format("%s: %g", folder.Name, finish - start))
 end
 
-StudioDebug.log("------------------------------------------")
+Logger.info("------------------------------------------")

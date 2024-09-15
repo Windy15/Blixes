@@ -1,8 +1,10 @@
+--!strict
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local Characters = require(ReplicatedStorage.Players.Characters)
-local ComponentTypes = require(ServerScriptService.Tools.Components.Types)
+local ComponentTypes = require(ServerScriptService.Components.Types)
 local EnumList = require(ReplicatedStorage.Modules.General.EnumList)
 local EnumState = require(ReplicatedStorage.Modules.General.EnumState)
 local GameEnums = require(ReplicatedStorage.GameEnums)
@@ -16,7 +18,7 @@ local Gun = setmetatable({
 }, ToolClass) :: GunImpl
 Gun.__index = Gun
 
-type GunImpl = {
+type GunImpl = typeof(setmetatable({} :: {
 	__index: GunImpl,
 	ToolType: string,
 
@@ -26,8 +28,9 @@ type GunImpl = {
 	Reload: (self: GunObject) -> (),
 	GetMode: (self: GunObject) -> EnumList.EnumItem,
 	SetCurrentMode: (self: GunObject, index: number) -> (),
-	ChangeMode: (self: GunObject, firingMode: EnumList.EnumItem) -> ()
-}
+	ChangeMode: (self: GunObject, firingMode: EnumList.EnumItem) -> (),
+	GetReplicateConfig: (self: GunObject) -> {[any]: any}
+}, {} :: ToolClass.ToolImpl))
 
 export type GunConfig = ToolClass.ToolConfig & {
 	DisplayName: string,
@@ -43,12 +46,12 @@ export type GunConfig = ToolClass.ToolConfig & {
 	_CreateDamageConnection: boolean?,
 }
 
-export type GunObject = ToolClass.ToolObject & typeof(setmetatable({} :: GunConfig & {
+export type GunObject = ToolClass.ToolObject & GunConfig & typeof(setmetatable({} :: {
 	GunState: EnumState.EnumState,
 
 	OnShot: Signal.Signal<nil>,
 	OnReloading: Signal.Signal<nil>,
-}, {} :: GunImpl))
+}, setmetatable({}, {}) :: GunImpl))
 
 
 function Gun.new(config): GunObject
@@ -81,6 +84,7 @@ function Gun:GetReplicateConfig()
 	config.Damage = self.Damage
 	config.FireRate = self.FireRate
 	config.ReloadTime = self.ReloadTime
+	return config
 end
 
 function Gun:Reload()

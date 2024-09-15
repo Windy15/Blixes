@@ -53,11 +53,7 @@ local function getSpecialType(val: any)
     return nil
 end
 
-local ClassSerializers = {
-    ["Stat"] = function(stat)
-        return stat.Value
-    end,
-}
+local ClassSerializers = {}
 
 local function replicateData(player: Player, objId: string, property: propertyName, value: any)
     local typename = getSpecialType(value)

@@ -1,5 +1,5 @@
---!strict
 --!native
+--!strict
 
 --[[
 	O(1) connect, disconnect, once

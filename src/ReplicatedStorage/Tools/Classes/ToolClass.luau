@@ -21,6 +21,8 @@ type ToolImpl = {
 
 	new: (config: ToolConfig) -> ToolObject,
 	Init: (self: ToolObject) -> (),
+	Equip: (self: ToolObject) -> (),
+	Unequip: (self: ToolObject) -> (),
 	Destroy: (self: ToolObject) -> (),
 	SetPlayer: (self: ToolObject, player: Player) -> ()
 }
@@ -29,7 +31,7 @@ export type ToolConfig = {
 	Instance: Tool,
 }
 
-export type ToolObject = typeof(setmetatable({} :: ToolConfig & {
+export type ToolObject = ToolConfig & typeof(setmetatable({} ::  {
 	ToolState: EnumState.EnumState,
 	Equipped: boolean,
 
