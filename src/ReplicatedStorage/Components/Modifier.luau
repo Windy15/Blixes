@@ -7,11 +7,13 @@ type modfunc = (input: number) -> number
 type ModifierImpl = {
     __index: ModifierImpl,
 
-    new: (holder: Types.Holder, ...string) -> (),
+    new: (holder: Types.Holder, ...string) -> Modifier,
     RegisterProperty: (self: Modifier, property: string) -> (),
     GetModified: (self: Modifier, property: string) -> number,
     AddModifyFunc: (self: Modifier, property: string, func: modfunc) -> (),
     RemoveModifyFunc: (self: Modifier, property: string, func: modfunc) -> boolean,
+
+    Destroy: (self: Modifier) -> (),
 }
 
 export type Modifier = typeof(setmetatable({} :: {
@@ -93,6 +95,10 @@ function Modifier:RemoveModifyFunc(property, func)
         return true
     end
     return false
+end
+
+function Modifier:Destroy()
+    table.clear(self.Properties)
 end
 
 return Modifier

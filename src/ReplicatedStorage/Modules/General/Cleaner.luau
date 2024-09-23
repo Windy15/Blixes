@@ -21,13 +21,13 @@ type CleanerImpl = {
     RemoveObject: (self: Cleaner, t: Cleanable) -> boolean,
     RunThreads: (self: Cleaner, ...any?) -> (),
     DeferThreads: (self: Cleaner, ...any?) -> (),
-    Finish: (self: Cleaner) -> (),
+    Flush: (self: Cleaner) -> (),
     CleanDeadThreads: (self: Cleaner) -> (),
 }
 
 export type Cleaner = typeof(setmetatable({} :: {
     Objects: {Cleanable},
-    OnFinish: (taskThatFinished: Cleanable?) -> ()?,
+    OnFlush: (taskThatFlushed: Cleanable?) -> ()?,
 }, {} :: CleanerImpl))
 
 local Cleaner = {} :: CleanerImpl
@@ -37,7 +37,7 @@ Cleaner.__type = "Cleaner"
 function Cleaner.new(...)
     local self = setmetatable({
         Objects = {...},
-        OnFinish = nil,
+        OnFlush = nil,
     }, Cleaner)
 
     return self
@@ -78,7 +78,7 @@ function Cleaner:DeferThreads(...)
     end
 end
 
-function Cleaner:Finish(...) -- Cleans all objects
+function Cleaner:Flush(...) -- Cleans all objects
     for i, t in ipairs(self.Objects) do
         self.Objects[i] = nil
         if type(t) == "thread" and coroutine.status(t) ~= "running" then
@@ -94,8 +94,8 @@ function Cleaner:Finish(...) -- Cleans all objects
             t:Destroy()
         end
     end
-    if self.OnFinish then
-        task.spawn(self.OnFinish, ...)
+    if self.OnFlush then
+        task.spawn(self.OnFlush, ...)
     end
 end
 

@@ -18,6 +18,8 @@ type ProjShooterImpl = {
 
     new: (holder: Types.Holder, caster: ProjTypes.ProjCaster, visualsFolder: Folder?, replicateBlacklist: {Player}?) -> ProjShooter,
     Fire: (self: ProjShooter, origin: Vector3, direction: Vector3) -> (),
+
+    Destroy: (self: ProjShooter) -> (),
 }
 
 export type ProjShooter = Types.ShootComponent & typeof(setmetatable({} :: {
@@ -75,6 +77,11 @@ end
 
 function ProjShooter:Fire(origin: Vector3, direction: Vector3)
     self.Caster:Fire(origin, direction)
+end
+
+function ProjShooter:Destroy()
+    self.OnFired:Destroy()
+    self.OnHit:Destroy()
 end
 
 return ProjShooter

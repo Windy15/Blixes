@@ -14,7 +14,9 @@ type ShootComponentImpl = {
     __index: ShootComponentImpl,
 
     new: (holder: Holder) -> ShootComponent,
-    Fire: (self: ShootComponent, origin: Vector3, direction: Vector3) -> ()
+    Fire: (self: ShootComponent, origin: Vector3, direction: Vector3) -> (),
+
+    Destroy: (self: ShootComponent) -> (),
 }
 
 type ExtraData = {[string]: any}

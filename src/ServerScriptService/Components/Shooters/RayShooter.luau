@@ -11,6 +11,8 @@ type RayShooterImpl = {
 
     new: (holder: Types.Holder, rayParams: RaycastParams?, pierceLimit: number?, ricochetLimit: number?) -> RayShooter,
     Fire: (self: RayShooter, origin: Vector3, direction: Vector3) -> (),
+
+    Destroy: (self: RayShooter) -> (),
 }
 
 export type RayShooter = Types.ShootComponent & typeof(setmetatable({} :: {
@@ -43,6 +45,11 @@ function RayShooter:Fire(origin, direction)
     if result then
         self.OnHit:Fire(result)
     end
+end
+
+function RayShooter:Destroy()
+    self.OnFired:Destroy()
+    self.OnHit:Destroy()
 end
 
 return RayShooter

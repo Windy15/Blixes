@@ -3,6 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local client = Players.LocalPlayer
 
+local ActionBinder = require(ReplicatedStorage.Components.ActionBinder)
 local Cleaner = require(ReplicatedStorage.Modules.General.Cleaner)
 local EnumState = require(ReplicatedStorage.Modules.General.EnumState)
 local GameEnums = require(ReplicatedStorage.GameEnums)
@@ -37,19 +38,23 @@ export type ToolObject = ToolConfig & typeof(setmetatable({} ::  {
 
 	Animations: {[string]: AnimationTrack},
 
-	OnEquipped: Signal.Signal<nil>,
-	OnUnequipped: Signal.Signal<nil>,
+	OnEquipped: Signal.Signal<>,
+	OnUnequipped: Signal.Signal<>,
+
+	ActionBinder: ActionBinder.ActionBinder,
 
 	Cleaner: Cleaner.Cleaner,
 }, {} :: ToolImpl))
 
 function Tool.new(config)
-	local self = setmetatable(config, Tool)
+	local self = setmetatable(config, Tool) :: ToolObject
 
 	self.Equipped = false
 	self.ToolState = EnumState.new(table.unpack(GameEnums.ToolState.OrderedItems))
 
 	self.Animations = {}
+
+	self.ActionBinder = ActionBinder.new(self)
 
 	self.Cleaner = Cleaner.new()
 
@@ -74,7 +79,7 @@ function Tool:Init()
 end
 
 function Tool:Destroy()
-	self.Cleaner:Finish()
+	self.Cleaner:Flush()
 	if self.Instance then
 		self.Instance:Destroy()
 	end
@@ -100,7 +105,6 @@ function Tool:Unequip()
 	if not self.Equipped or not self.ToolState:IsState(GameEnums.ToolState.Idle) then return end
 
 	self.Instance.Remotes.Unequip:FireServer()
-	self.Instance.Parent = self.Player.Backpack
 	self.Equipped = false
 end
 

@@ -1,32 +1,15 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
 
 local Cleaner = require(ReplicatedStorage.Modules.General.Cleaner)
 local EnumState = require(ReplicatedStorage.Modules.General.EnumState)
 local GameEnums = require(ReplicatedStorage.GameEnums)
+local GlobalObjects = require(ServerScriptService.GlobalObjects)
+local Modifier = require(ReplicatedStorage.Components.Modifier)
+local Replicator = require(ServerScriptService.Components.Replicator)
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
-local _GlobalToolsMeta = {
-	__mode = "k", -- dont hold references to destroyed instances
-
-	_AddTool = function(self, tool)
-		self[tool.Instance] = tool
-		self.OnToolAdded:Fire(tool)
-	end,
-	_RemoveTool = function(self, tool)
-		if self[tool.Instance] then
-			self[tool.Instance] = nil
-			self.OnToolRemoved:Fire(tool)
-		end
-	end,
-
-	OnToolAdded = Signal.new(),
-	OnToolRemoved = Signal.new()
-}
-_GlobalToolsMeta.__index = _GlobalToolsMeta
-local GlobalTools = setmetatable({}, _GlobalToolsMeta)
-
 local Tool = {
-	GlobalTools = GlobalTools,
 	__type = "Tool",
 	ToolName = "DefaultTool",
 } :: ToolImpl
@@ -37,10 +20,9 @@ export type ToolImpl = {
 	__type: string,
 	ToolName: string,
 
-	GlobalTools: typeof(GlobalTools),
-
 	new: (config: ToolConfig) -> ToolObject,
 	Init: (self: ToolObject) -> (),
+	SetValue: (self: ToolObject, name: string, value: any) -> (),
 	Destroy: (self: ToolObject) -> (),
 	GetReplicateConfig: (self: ToolObject) -> any,
 	SetPlayer: (self: ToolObject, player: Player) -> (),
@@ -56,8 +38,11 @@ export type ToolObject = ToolConfig & typeof(setmetatable({} :: {
 	ToolState: EnumState.EnumState,
 	Cooldowns: {[string]: any},
 
-	OnEquipped: Signal.Signal<nil>,
-	OnUnequipped: Signal.Signal<nil>,
+	OnEquipped: Signal.Signal<>,
+	OnUnequipped: Signal.Signal<>,
+
+	Modifier: Modifier.Modifier,
+	Replicator: Replicator.Replicator,
 
 	Cleaner: Cleaner.Cleaner,
 }, {} :: ToolImpl))
@@ -70,8 +55,11 @@ function Tool.new(config: ToolConfig)
 
 	self.Cleaner = Cleaner.new()
 
-	self.OnEquipped = Signal.new()
+	self.OnEquipped = self.Cleaner:AddObject(Signal.new())
 	self.OnUnequipped = self.Cleaner:AddObject(Signal.new())
+
+	self.Modifier = self.Cleaner:AddObject(Modifier.new(self))
+	self.Replicator = self.Cleaner:AddObject(Replicator.new(self, self.Instance.Remotes.ChangeValue))
 
 	return self
 end
@@ -90,7 +78,7 @@ function Tool:Init()
 	end
 
 	self.Instance = toolClone
-	Tool.GlobalTools:_AddTool(self)
+	GlobalObjects.Storages.Tools:AddObject(self.Instance, self)
 
 	self.Cleaner:AddObject(toolClone.Destroying:Connect(function() -- in case tool instance gets destroyed without object getting destroyed
 		warn(`Tool instance {self.ToolName} destroyed without calling :Destroy() on object`)
@@ -102,10 +90,15 @@ function Tool:Init()
 	return toolClone
 end
 
+function Tool:SetValue(property: string, value: any)
+	self[property] = value
+	self.Replicator:Replicate(property)
+end
+
 function Tool:Destroy()
-	self.Cleaner:Finish()
+	self.Cleaner:Flush()
 	if self.Instance then self.Instance:Destroy() end
-	Tool.GlobalTools:_RemoveTool(self)
+	GlobalObjects.Storages.Tools:RemoveObject(self.Instance)
 end
 
 function Tool:GetReplicateConfig()
@@ -117,12 +110,10 @@ function Tool:SetPlayer(player)
 
 	if player then
 		if self.Instance then
-			self.Instance.ReplicateObject:FireClient(player, self.ToolName, self:GetReplicateConfig())
+			self.Instance.Remotes.ReplicateObject:FireClient(player, self.ToolName, self:GetReplicateConfig())
 		end
 
-		if self.Instance.Parent ~= player.Backpack and self.Instance.Parent ~= player.Character then
-			self.Instance.Parent = player.Backpack
-		end
+		self.Replicator.PlayersToReplicate[player] = true
 	else
 		self.Instance.Parent = nil
 	end

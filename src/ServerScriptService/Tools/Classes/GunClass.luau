@@ -49,8 +49,8 @@ export type GunConfig = ToolClass.ToolConfig & {
 export type GunObject = ToolClass.ToolObject & GunConfig & typeof(setmetatable({} :: {
 	GunState: EnumState.EnumState,
 
-	OnShot: Signal.Signal<nil>,
-	OnReloading: Signal.Signal<nil>,
+	OnShot: Signal.Signal<>,
+	OnReloading: Signal.Signal<>,
 }, setmetatable({}, {}) :: GunImpl))
 
 
