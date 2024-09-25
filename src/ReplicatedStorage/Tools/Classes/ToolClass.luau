@@ -54,9 +54,9 @@ function Tool.new(config)
 
 	self.Animations = {}
 
-	self.ActionBinder = ActionBinder.new(self)
-
 	self.Cleaner = Cleaner.new()
+
+	self.ActionBinder = self.Cleaner:AddObject(ActionBinder.new(self))
 
 	self.OnEquipped = self.Cleaner:AddObject(Signal.new())
 	self.OnUnequipped = self.Cleaner:AddObject(Signal.new())

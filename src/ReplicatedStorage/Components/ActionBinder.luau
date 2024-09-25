@@ -1,7 +1,5 @@
 --!strict
 
-local UserInputService = game:GetService("UserInputService")
-
 local Types = require(script.Parent.Types)
 
 type ActionBinderImpl = {
@@ -10,7 +8,7 @@ type ActionBinderImpl = {
     new: (holder: Types.Holder) -> (),
 
     BindAction: (self: ActionBinder, actionName: string, func: actionFunc) -> (),
-    BindKeyToAction: (self: ActionBinder, actionName: string, key: EnumItem) -> (),
+    BindKeyToAction: (self: ActionBinder, actionName: string, key: EnumItem, inputEvent: RBXScriptSignal) -> (),
 
     Destroy: (self: ActionBinder) -> (),
 }
@@ -23,7 +21,7 @@ export type ActionBinder = typeof(setmetatable({} :: {
 
 type Action = {
     Function: (InputObject, boolean) -> (),
-    Keybinds: {[EnumItem]: RBXScriptConnection}
+    Keybinds: {[EnumItem]: {InputEvent: RBXScriptSignal, Connection: RBXScriptConnection}}
 }
 
 local Action = {}
@@ -36,6 +34,7 @@ function Action.new()
 end
 
 local ActionBinder = {} :: ActionBinderImpl
+ActionBinder.__index = ActionBinder
 
 function ActionBinder.new(holder)
     return setmetatable({
@@ -45,10 +44,17 @@ function ActionBinder.new(holder)
 end
 
 function ActionBinder:BindAction(actionName, func)
-    if not self.Actions[actionName] then
-        self.Actions[actionName] = Action.new()
+    local action = self.Actions[actionName]
+    if not action then
+        action = Action.new()
+        self.Actions[actionName] = action
+    else
+        for _, keybindData in action.Keybinds do
+            keybindData.Connection:Disconnect()
+            keybindData.Connection = keybindData.InputEvent:Connect(func)
+        end
     end
-    self.Actions[actionName].Function = func
+    action.Function = func
 end
 
 local function checkAction(self: ActionBinder, actionName: string)
@@ -59,18 +65,20 @@ local function checkAction(self: ActionBinder, actionName: string)
     return action
 end
 
-function ActionBinder:BindKeyToAction(actionName, key)
+function ActionBinder:BindKeyToAction(actionName, key, inputEvent)
     local action = checkAction(self, actionName)
-    if action.Keybinds[key] then
-        action.Keybinds[key]:Disconnect()
+    local KeybindData = action.Keybinds[key]
+    if KeybindData then
+        KeybindData.Connection:Disconnect()
     end
-    action.Keybinds[key] = UserInputService.InputBegan:Connect(action.Function)
+    KeybindData.InputEvent = inputEvent
+    KeybindData.Connection = inputEvent:Connect(action.Function)
 end
 
 function ActionBinder:Destroy()
     for name, action in self.Actions do
-        for _, connection in action.Keybinds do
-            connection:Disconnect()
+        for _, keybindData in action.Keybinds do
+            keybindData.Connection:Disconnect()
         end
         self.Actions[name] = nil
     end
