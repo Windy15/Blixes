@@ -5,7 +5,7 @@ local Signal = require(script.Parent.Signal)
 
 type EnumStateImpl = {
     __index: EnumStateImpl,
-    __type: string,
+    __type: "EnumState",
 
     new: (...EnumList.EnumItem) -> EnumState,
     GetState: (self: EnumState) -> EnumList.EnumItem,

@@ -5,7 +5,7 @@ local RunService = game:GetService("RunService")
 
 export type CountdownImpl = {
     __index: CountdownImpl,
-    __type: string,
+    __type: "Countdown",
 
     new: (start: number, finish: number, roundTo: number?, onTick: (currentTime: number) -> ()?) -> (),
     Start: (self: Countdown) -> (),

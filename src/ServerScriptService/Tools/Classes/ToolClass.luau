@@ -17,11 +17,11 @@ Tool.__index = Tool
 
 export type ToolImpl = {
 	__index: ToolImpl,
-	__type: string,
-	ToolName: string,
+	__type: "Tool",
+	ToolName: "DefaultTool",
 
 	new: (config: ToolConfig) -> ToolObject,
-	Init: (self: ToolObject) -> (),
+	Init: (self: ToolObject, config: InitConfig) -> (),
 	SetValue: (self: ToolObject, name: string, value: any) -> (),
 	Destroy: (self: ToolObject) -> (),
 	GetReplicateConfig: (self: ToolObject) -> any,
@@ -36,7 +36,7 @@ export type ToolObject = ToolConfig & typeof(setmetatable({} :: {
 
 	Equipped: boolean,
 	ToolState: EnumState.EnumState,
-	Cooldowns: {[string]: any},
+	Cooldowns: {[string]: number},
 
 	OnEquipped: Signal.Signal<>,
 	OnUnequipped: Signal.Signal<>,
@@ -45,14 +45,23 @@ export type ToolObject = ToolConfig & typeof(setmetatable({} :: {
 	Replicator: Replicator.Replicator,
 
 	Cleaner: Cleaner.Cleaner,
+
+	_Initialized: boolean,
 }, {} :: ToolImpl))
+
+type InitConfig = {
+
+}
 
 function Tool.new(config: ToolConfig)
 	local self = setmetatable(config, Tool) :: ToolObject
 
+	self._Initialized = false
+
 	self.Equipped = false
 	self.ToolState = EnumState.new(table.unpack(GameEnums.ToolState.OrderedItems))
 
+	self.Cooldowns = {}
 	self.Cleaner = Cleaner.new()
 
 	self.OnEquipped = self.Cleaner:AddObject(Signal.new())
@@ -64,7 +73,7 @@ function Tool.new(config: ToolConfig)
 	return self
 end
 
-function Tool:Init()
+function Tool:Init(config)
 	local toolFolder = ReplicatedStorage.Tools:FindFirstChild(self.ToolName, true)
 	if not toolFolder then
 		error(`'{self.ToolName}' is not a valid ToolName, or has no tool model`, 2)
@@ -85,14 +94,14 @@ function Tool:Init()
 		self:Destroy()
 	end))
 
-	toolClone.Server.Enabled = true
+	self._Initialized = true
 
 	return toolClone
 end
 
 function Tool:SetValue(property: string, value: any)
 	self[property] = value
-	self.Replicator:Replicate(property)
+	self.Replicator:Replicate(property, value)
 end
 
 function Tool:Destroy()

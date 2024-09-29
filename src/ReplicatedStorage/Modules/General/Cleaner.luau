@@ -1,4 +1,3 @@
---!native
 --!strict
 
 type DestroyableMeta = {
@@ -14,7 +13,7 @@ type func = (...any) -> ...any
 
 type CleanerImpl = {
     __index: CleanerImpl,
-    __type: string,
+    __type: "Cleaner",
 
     new: (...Cleanable) -> Cleaner,
     AddObject: <T>(self: Cleaner, t: T) -> T,

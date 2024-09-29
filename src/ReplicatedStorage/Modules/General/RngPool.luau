@@ -3,7 +3,7 @@
 
 type RngPoolImpl = {
     __index: RngPoolImpl,
-    __type: string,
+    __type: "RngPool",
 
     new: (pool: Pool, rngState: Random?) -> RngPool,
     PickRandom: (self: RngPool) -> (any, number),
@@ -19,7 +19,7 @@ export type Pool = {
     [any]: number
 }
 
-local RngPool = {}
+local RngPool = {} :: RngPoolImpl
 RngPool.__index = RngPool
 RngPool.__type = "RngPool"
 

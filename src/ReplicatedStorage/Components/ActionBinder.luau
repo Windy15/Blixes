@@ -8,7 +8,7 @@ type ActionBinderImpl = {
     new: (holder: Types.Holder) -> (),
 
     BindAction: (self: ActionBinder, actionName: string, func: actionFunc) -> (),
-    BindKeyToAction: (self: ActionBinder, actionName: string, key: EnumItem, inputEvent: RBXScriptSignal) -> (),
+    BindKeyToAction: (self: ActionBinder, actionName: string, key: Enum.UserInputState, inputEvent: RBXScriptSignal) -> (),
 
     Destroy: (self: ActionBinder) -> (),
 }

@@ -10,7 +10,7 @@ type callback<T...> = (T...) -> ()
 
 type SignalImpl<T...> = {
 	__index: SignalImpl<T...>,
-	__type: string,
+	__type: "Signal",
 
 	new: () -> Signal<T...>,
 	Connect: (self: Signal<T...>, callback: (T...) -> ()) -> Connection<T...>,
@@ -28,7 +28,7 @@ export type Signal<T...> = typeof(setmetatable({} :: {
 
 type ConnectionImpl<T...> = {
 	__index: ConnectionImpl<T...>,
-	__type: string,
+	__type: "SignalConnection",
 	new: (signal: Signal<T...>, callback: callback<T...> | thread) -> Connection<T...>,
 	Disconnect: (self: Connection<T...>) -> ()
 }

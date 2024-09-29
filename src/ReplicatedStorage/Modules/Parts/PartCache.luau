@@ -1,4 +1,5 @@
 --!native
+--!strict
 
 local CACHE_CFRAME = CFrame.new(1e6, 1e6, 1e6)
 local CACHE_TAG = "CACHED_PARTCACHE"
@@ -10,6 +11,8 @@ export type PartCache = {
 }
 
 type CachePoolImpl = {
+    __index: CachePoolImpl,
+
     StorePart: (self: CachePool, part: BasePart) -> (),
     GetPart: (self: CachePool) -> BasePart,
     ClearParts: (self: CachePool) -> (),
@@ -17,12 +20,13 @@ type CachePoolImpl = {
 
 export type CachePool = typeof(setmetatable({} :: {
     Part: BasePart,
-    [number]: BasePart,
+    Pool: {BasePart},
 }, {} :: CachePoolImpl))
 
 local PartCache = {} :: PartCache
 local Pools = {}
 local CachePool = {} :: CachePoolImpl
+CachePool.__index = CachePool
 
 function PartCache:CreatePool(poolKey: any, part: BasePart?)
     if Pools[poolKey] then
@@ -38,11 +42,12 @@ function PartCache:CreatePool(poolKey: any, part: BasePart?)
     end
 
     local pool = setmetatable({
-        Part = part
+        Part = part,
+        Pool = {},
     }, CachePool)
     Pools[poolKey] = pool :: CachePool
 
-    return pool
+    return pool :: CachePool
 end
 
 function PartCache:GetPool(poolKey: any)
@@ -56,15 +61,15 @@ end
 function CachePool:StorePart(part: BasePart)
     part.CFrame = CACHE_CFRAME
     part:AddTag(CACHE_TAG)
-    table.insert(self, part)
+    table.insert(self.Pool, part)
 end
 
 function CachePool:GetPart()
     local len = #self
-    local part: BasePart = self[len]
+    local part = self.Pool[len]
     if part then
         part:RemoveTag(CACHE_TAG)
-        self[len] = nil
+        self.Pool[len] = nil
     else
         return self.Part:Clone()
     end
@@ -72,10 +77,10 @@ function CachePool:GetPart()
 end
 
 function CachePool:ClearParts()
-    for i, part in ipairs(self) do
+    for i, part in self.Pool do
         part:RemoveTag(CACHE_TAG)
         part:Destroy()
-        self[i] = nil
+        self.Pool[i] = nil
     end
 end
 

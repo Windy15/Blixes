@@ -1,13 +1,25 @@
 --!native
---!nonstrict
+--!strict
 
-local Region = require(script.Parent.RegionClass)
+type BlockRegionImpl = {
+	__index: BlockRegionImpl,
 
-local BlockRegion = setmetatable({}, Region)
+	new: (cframe: CFrame, size: Vector3) -> BlockRegion,
+	IsPointInRegion: (self: BlockRegion, point: Vector3) -> boolean,
+	GetTouchingParts: (self: BlockRegion, params: OverlapParams) -> {BasePart},
+	GetPlayersInRegion: (self: BlockRegion) -> {Player},
+}
+
+export type BlockRegion = typeof(setmetatable({} :: {
+	CFrame: CFrame,
+	Size: Vector3,
+}, {} :: BlockRegionImpl))
+
+local BlockRegion = {} :: BlockRegionImpl
 BlockRegion.__index = BlockRegion
 
 function BlockRegion.new(cframe: CFrame, size: Vector3)
-    return setmetatable(Region.new{
+    return setmetatable({
         CFrame = cframe,
         Size = size
     }, BlockRegion)
@@ -28,6 +40,16 @@ end
 
 function BlockRegion:GetTouchingParts(params: OverlapParams): {BasePart}
     return workspace:GetPartBoundsInBox(self.CFrame, self.Size, params)
+end
+
+function BlockRegion:GetPlayersInRegion(): {Player}
+	local players = {}
+	for _, char in ipairs(workspace.Players:GetChildren()) do
+		if self:IsPointInRegion(char:GetPivot().Position) then
+			table.insert(players, char)
+		end
+	end
+	return players
 end
 
 return BlockRegion

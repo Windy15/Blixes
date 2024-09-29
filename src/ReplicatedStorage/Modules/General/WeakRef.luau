@@ -1,7 +1,7 @@
 --strict
 
 type WeakRefImpl<T> = {
-    __mode: string,
+    __mode: "v",
 
     new: (value: T) -> WeakRef<T>
 }

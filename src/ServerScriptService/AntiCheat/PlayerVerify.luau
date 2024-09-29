@@ -1,4 +1,5 @@
 --!native
+--!strict
 
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -7,7 +8,7 @@ local ServerSettings = require(ServerScriptService.ServerSettings)
 
 local PlayerVerify = {}
 
-local function searchRecForPart(rec: PlayerRollback.Recording, part: BasePart)
+local function searchRecForPart(rec: PlayerRollback.Recording, part: BasePart): PlayerRollback.PartRec?
 	for _, partRec in ipairs(rec.Parts) do
 		if partRec.Part == part then
 			return partRec
@@ -39,7 +40,7 @@ function PlayerVerify.verifyPosition(player: Player, originPart: BasePart, expec
 
 		while min <= max do
 			local mid = math.floor((min + max) / 2)
-			closestRecording = partRollback[mid]
+			closestRecording = partRollback[mid] :: any
 			val = (closestRecording :: PlayerRollback.Recording).Time
 			if val == pingTime then
 				break

@@ -11,7 +11,8 @@ local Bullet = ReplicatedStorage.Visuals.Projectiles.Bullet
 
 local BaseStats = {
 	Damage = 20,
-	FireRate = 20
+	FireRate = 20,
+	ReloadTime = 1,
 }
 
 local HoneyBadger = setmetatable({
@@ -21,14 +22,15 @@ local HoneyBadger = setmetatable({
 HoneyBadger.__index = HoneyBadger
 
 function HoneyBadger.new(config)
-	local self = {
+	local self = setmetatable(GunClass.new({
 		DisplayName = "Honey Badger",
 
 		Damage = BaseStats.Damage,
 		FireRate = BaseStats.FireRate,
+		ReloadTime = BaseStats.ReloadTime,
 
-		Modes = EnumState.new(GameEnums.GunMode.Auto, GameEnums.GunMode.Semi),
-	}
+		FiringMode = EnumState.new(GameEnums.GunMode.Auto, GameEnums.GunMode.Semi),
+	}), HoneyBadger)
 	self.Shooter = ProjShooter.new(self, ProjCaster.new({
 		DestroyOnHit = true,
 	}), Bullet)

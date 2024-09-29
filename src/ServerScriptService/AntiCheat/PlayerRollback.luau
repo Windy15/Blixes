@@ -1,10 +1,11 @@
 --!native
+--!strict
 
 export type Recording = {
 	Time: number,
 	Parts: {PartRec},
 	HumanoidData: {
-		State: EnumItem,
+		State: Enum.HumanoidStateType,
 		WalkSpeed: number,
 		JumpHeight: number,
 	}
@@ -22,13 +23,13 @@ local RunService = game:GetService("RunService")
 local RECORDING_LIMIT = 600 -- 10 seconds of rollback on 60 FPS
 local MAX_FPS = 60
 
-local PlayerRollback = {}
+local PlayerRollback = {} :: {[Player]: {Recording}}
 
 Players.PlayerAdded:Connect(function(player)
 	local rollback = table.create(RECORDING_LIMIT)
 	PlayerRollback[player] = rollback
 
-	local rollbackConnection = nil
+	local rollbackConnection: RBXScriptConnection? = nil
 
 	local function finishRollback()
 		if rollbackConnection then
@@ -65,7 +66,7 @@ Players.PlayerAdded:Connect(function(player)
 				Time = os.clock(),
 				Parts = {},
 				HumanoidData = {
-					State = state,
+					State = state :: Enum.HumanoidStateType,
 					WalkSpeed = humanoid.WalkSpeed,
 					JumpHeight = humanoid.JumpHeight,
 				}

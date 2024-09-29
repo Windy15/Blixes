@@ -3,9 +3,8 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
-local Characters = require(ReplicatedStorage.Players.Characters)
+local Characters = require(ServerScriptService.Players.Characters)
 local ComponentTypes = require(ServerScriptService.Components.Types)
-local EnumList = require(ReplicatedStorage.Modules.General.EnumList)
 local EnumState = require(ReplicatedStorage.Modules.General.EnumState)
 local GameEnums = require(ReplicatedStorage.GameEnums)
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
@@ -20,15 +19,12 @@ Gun.__index = Gun
 
 type GunImpl = typeof(setmetatable({} :: {
 	__index: GunImpl,
-	ToolType: string,
+	ToolType: "Gun",
 
 	new: (config: GunConfig) -> GunObject,
-	_ConfigBullets: (self: GunObject) -> (),
-	Init: (self: GunObject) -> (),
+	Init: (self: GunObject, config: InitConfig) -> (),
+	Shoot: (self: GunObject, origin: Vector3, direction: Vector3) -> (),
 	Reload: (self: GunObject) -> (),
-	GetMode: (self: GunObject) -> EnumList.EnumItem,
-	SetCurrentMode: (self: GunObject, index: number) -> (),
-	ChangeMode: (self: GunObject, firingMode: EnumList.EnumItem) -> (),
 	GetReplicateConfig: (self: GunObject) -> {[any]: any}
 }, {} :: ToolClass.ToolImpl))
 
@@ -39,15 +35,17 @@ export type GunConfig = ToolClass.ToolConfig & {
 	FireRate: number,
 	ReloadTime: number,
 
-	Shooter: ComponentTypes.ShootComponent,
-
 	FiringMode: EnumState.EnumState,
+}
 
-	_CreateDamageConnection: boolean?,
+type InitConfig = {
+	_CreateDamageConnection: boolean?
 }
 
 export type GunObject = ToolClass.ToolObject & GunConfig & typeof(setmetatable({} :: {
 	GunState: EnumState.EnumState,
+
+	Shooter: ComponentTypes.ShootComponent,
 
 	OnShot: Signal.Signal<>,
 	OnReloading: Signal.Signal<>,
@@ -62,20 +60,20 @@ function Gun.new(config): GunObject
 	self.OnShot = self.Cleaner:AddObject(Signal.new())
 	self.OnReloading = self.Cleaner:AddObject(Signal.new())
 
-	if self._CreateDamageConnection then
-		self.Shooter.OnHit:Connect(function(result)
-			local char = Characters:GetCharFromInstance(result.Instance)
-			if char then
-				char.Instance.Humanoid:TakeDamage(self.Damage)
-			end
-		end)
-	end
-
 	return self
 end
 
-function Gun:Init()
-	ToolClass.Init(self)
+function Gun:Init(config)
+	ToolClass.Init(self, config)
+
+	if config._CreateDamageConnection then
+		self.Shooter.OnHit:Connect(function(result)
+			local char = Characters:GetCharFromInstance(result.Instance)
+			if char then
+				char:TakeDamage(self.Damage)
+			end
+		end)
+	end
 end
 
 function Gun:GetReplicateConfig()
@@ -85,6 +83,15 @@ function Gun:GetReplicateConfig()
 	config.FireRate = self.FireRate
 	config.ReloadTime = self.ReloadTime
 	return config
+end
+
+function Gun:Shoot(origin, direction)
+	if not self.GunState:IsState(GunState.Idle) then return end
+	self.GunState:SetState(GunState.Shooting)
+	self.Shooter:Fire(origin, direction)
+	task.delay(self.FireRate, function()
+		self.GunState:SetState(GunState.Idle)
+	end)
 end
 
 function Gun:Reload()

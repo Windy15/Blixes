@@ -1,5 +1,5 @@
 --!native
---!nonstrict
+--!strict
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -8,7 +8,7 @@ local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
 type RaycastHitboxImpl = {
 	__index: RaycastHitboxImpl,
-	__type: string,
+	__type: "RaycastHitbox",
 
 	new: (model: Instance, rayParams: RaycastParams?, hitOnce: boolean?, humanoidOnly: boolean?) -> RaycastHitbox,
 	StartHit: (self: RaycastHitbox) -> (),
@@ -90,7 +90,7 @@ function RaycastHitbox:StartHit()
 	local RayPointsTable = {} :: {any}
 	local attachments = self.ShallowAttachments and self.Model:GetChildren() or self.Model:GetDescendants()
 
-	for _, att in ipairs(attachments) do
+	for _, att: Attachment in ipairs(attachments) do
 		if att.Name ~= self.RayPointName then continue end
 
 		if att:IsA("Attachment") then
@@ -98,7 +98,7 @@ function RaycastHitbox:StartHit()
 				local rayEnabled = att:GetAttribute("RayEnabled")
 				rayEnabled = rayEnabled ~= false
 
-				local raySize, rayOrientation = att:GetAttribute("RaySize"), att:GetAttribute("RayOrientation")
+				local raySize, rayOrientation = att:GetAttribute("RaySize"), att:GetAttribute("RayOrientation") :: Vector3?
 
 				table.insert(RayPointsTable, {
 					RayEnabled = rayEnabled,
@@ -107,7 +107,7 @@ function RaycastHitbox:StartHit()
 					Position = att.Position,
 					LastPosition = att.WorldPosition,
 					RaySize = raySize or Vector3.zero,
-					RayOrientation = rayOrientation and CFrame.fromOrientation(rayOrientation.X, rayOrientation.Y, rayOrientation.Z) or CFrame.identity
+					RayOrientation = if rayOrientation then CFrame.fromOrientation(rayOrientation.X, rayOrientation.Y, rayOrientation.Z) else CFrame.identity
 				})
 			else
 				table.insert(RayPointsTable, {

@@ -85,7 +85,7 @@ end
 
 RunService.PreAnimation:Connect(function()
     debug.profilebegin("Replicating Objects")
-    for object, repData in Replicator.Objects do
+    for object, repData in Replicator.Objects :: any do
         if repData.IsTracking then
             for property, playersToReplicate in repData.TrackingProperties do
                 local value = getSerializedValue(object, property)

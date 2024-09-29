@@ -1,23 +1,21 @@
 --!strict
 
 local RunService = game:GetService("RunService")
-local ServerScriptService = game:GetService("ServerScriptService")
-
-local Types = require(ServerScriptService.Components.Types)
 
 local GlobalReplicators = setmetatable({} :: {[Replicator]: boolean}, {__mode = "k"})
 
 type ReplicatorImpl = {
     __index: ReplicatorImpl,
 
-    new: (holder: Types.Holder, changeRemote: RemoteEvent | UnreliableRemoteEvent, properties: {string}?) -> Replicator,
+    new: (holder: any, changeRemote: RemoteEvent | UnreliableRemoteEvent, properties: {string}?) -> Replicator,
     Replicate: (self: Replicator, key: string, replacement: {Value: any}?) -> (),
+    RemoveFromQueue: (self: Replicator, key: string) -> (),
 
     Destroy: (self: Replicator) -> (),
 }
 
 export type Replicator = typeof(setmetatable({} :: {
-    Holder: Types.Holder,
+    Holder: any,
     _ChangeRemote: RemoteEvent | UnreliableRemoteEvent,
     ReplicatingQueue: {[string]: {Value: any}},
     PlayersToReplicate: {[Player]: boolean},
@@ -46,6 +44,10 @@ function Replicator:Replicate(key, replacement)
     if table.find(self.PropertiesToReplicate, key) then
         self.ReplicatingQueue[key] = replacement or {Value = self.Holder[key]}
     end
+end
+
+function Replicator:RemoveFromQueue(key)
+    self.ReplicatingQueue[key] = nil
 end
 
 function Replicator:Destroy()

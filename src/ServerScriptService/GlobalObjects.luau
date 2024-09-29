@@ -65,11 +65,12 @@ export type ObjectStorage<T> = typeof(setmetatable({} :: {
 local GlobalObjects = {
     Storages = {
         Tools = ObjectStorage.new(),
+        Entities = ObjectStorage.new(),
 ---@diagnostic disable-next-line: undefined-type
     } :: {[string]: ObjectStorage<unknown>}
 }
 
-function GlobalObjects:FindObject(inst: Instance)
+function GlobalObjects:FindObject(inst: Instance): (Instance | nil, string | "None")
     for category, storage in GlobalObjects.Storages do
         for keyinst, obj in storage.InstToObj :: any do
             if keyinst == inst then

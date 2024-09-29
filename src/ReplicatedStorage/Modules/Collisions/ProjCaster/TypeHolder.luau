@@ -21,7 +21,7 @@ export type ProjConfig = {
 
 export type ProjCasterImpl = {
     __index: ProjCasterImpl,
-    __type: string,
+    __type: "ProjCaster",
 
     new: (config: ProjConfig) -> ProjCaster,
     Fire: (self: ProjCaster, origin: Vector3, velocity: Vector3) -> Projectile,
@@ -45,7 +45,7 @@ export type ProjCaster = typeof(setmetatable({} :: {
 
 export type ProjectileImpl = {
     __index: ProjectileImpl,
-    __type: string,
+    __type: "Projectile",
 
     new: (caster: ProjCaster, origin: Vector3, velocity: Vector3) -> Projectile,
     buffToId: (buff: buffer) -> number,

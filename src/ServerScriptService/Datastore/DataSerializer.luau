@@ -1,4 +1,5 @@
 --!native
+--!strict
 
 type DataKey = string | number
 type EncodedData = {any}
@@ -58,7 +59,7 @@ function Serializer.dataEncode(data: {[DataKey]: any}): {[DataKey]: EncodedTable
         if encode then
             data[k] = encode(val)
         elseif typeof(val) == "table" then
-            data[k] = {'table', Serializer.dataEncode(val)}
+            data[k] = {'table', Serializer.dataEncode(val) :: any}
         elseif type(val) == "userdata" and Serializer.WarnUnknownType then
             warn("DataSerializer: Could not serialize datatype "..typeof(val))
         elseif type(val) == "number" and not isProperNum(val) then
