@@ -11,14 +11,12 @@ local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
 local Tool = {
 	__type = "Tool",
-	ToolName = "DefaultTool",
 } :: ToolImpl
 Tool.__index = Tool
 
 export type ToolImpl = {
 	__index: ToolImpl,
 	__type: "Tool",
-	ToolName: "DefaultTool",
 
 	new: (config: ToolConfig) -> ToolObject,
 	Init: (self: ToolObject, config: InitConfig) -> (),
@@ -28,7 +26,9 @@ export type ToolImpl = {
 	SetPlayer: (self: ToolObject, player: Player) -> (),
 }
 
-export type ToolConfig = {}
+export type ToolConfig = {
+	ToolName: string,
+}
 
 export type ToolObject = ToolConfig & typeof(setmetatable({} :: {
 	Instance: Tool,

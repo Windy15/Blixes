@@ -3,7 +3,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local client = Players.LocalPlayer
 
-local ActionBinder = require(ReplicatedStorage.Components.ActionBinder)
+local ClientScripts = client.PlayerScripts
+
+local ActionBinder = require(ClientScripts.Components.ActionBinder)
 local Cleaner = require(ReplicatedStorage.Modules.General.Cleaner)
 local EnumState = require(ReplicatedStorage.Modules.General.EnumState)
 local GameEnums = require(ReplicatedStorage.GameEnums)
@@ -11,14 +13,12 @@ local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
 local Tool = {
 	__type = "Tool",
-	ToolName = "DefaultTool",
 } :: ToolImpl
 Tool.__index = Tool
 
 type ToolImpl = {
 	__index: ToolImpl,
 	__type: string,
-	ToolName: string,
 
 	new: (config: ToolConfig) -> ToolObject,
 	Init: (self: ToolObject) -> (),
@@ -29,6 +29,7 @@ type ToolImpl = {
 }
 
 export type ToolConfig = {
+	ToolName: string,
 	Instance: Tool,
 }
 

@@ -3,10 +3,11 @@
 local ContextActionService = game:GetService("ContextActionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ClientScripts = Players.LocalPlayer.PlayerScripts
 
 local Mouse = Players.LocalPlayer:GetMouse()
 
-local ClientData = require(ReplicatedStorage.Players.PlayerData)[Players.LocalPlayer]
+local ClientData = require(ClientScripts.Players.PlayerData)[Players.LocalPlayer]
 local ToolClass = require(ReplicatedStorage.Tools.Classes.ToolClass)
 
 local inventory = ClientData.Inventory

@@ -1,6 +1,7 @@
 --!strict
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Types = require(script.Parent.Types)
+local Types = require(ReplicatedStorage.Components.Types)
 
 type ActionBinderImpl = {
     __index: ActionBinderImpl,

@@ -4,6 +4,25 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
+type ObjectStorageImpl<T> = {
+    __index: ObjectStorageImpl<T>,
+
+    new: () -> ObjectStorage<T>,
+    GetObject: (self: ObjectStorage<T>, inst: Instance) -> T,
+    GetInstance: (self: ObjectStorage<T>, obj: T) -> Instance,
+
+    AddObject: (self: ObjectStorage<T>, inst: Instance, obj: T) -> (),
+    RemoveObject: (self: ObjectStorage<T>, inst: Instance) -> (),
+}
+
+export type ObjectStorage<T> = typeof(setmetatable({} :: {
+    InstToObj: typeof(setmetatable({} :: {[Instance]: T}, {} :: {__mode: string})),
+    ObjToInst: typeof(setmetatable({} :: {[T]: Instance}, {} :: {__mode: string})),
+
+    OnObjectAdded: Signal.Signal<T, Instance>,
+    OnObjectRemoved: Signal.Signal<T, Instance>,
+}, {} :: ObjectStorageImpl<T>))
+
 local ObjectStorage = {} :: ObjectStorageImpl<any>
 ObjectStorage.__index = ObjectStorage
 
@@ -42,25 +61,6 @@ function ObjectStorage:RemoveObject(inst)
         self.OnObjectRemoved:Fire(obj, inst)
     end
 end
-
-type ObjectStorageImpl<T> = {
-    __index: ObjectStorageImpl<T>,
-
-    new: () -> ObjectStorage<T>,
-    GetObject: (self: ObjectStorage<T>, inst: Instance) -> T,
-    GetInstance: (self: ObjectStorage<T>, obj: T) -> Instance,
-
-    AddObject: (self: ObjectStorage<T>, inst: Instance, obj: T) -> (),
-    RemoveObject: (self: ObjectStorage<T>, inst: Instance) -> (),
-}
-
-export type ObjectStorage<T> = typeof(setmetatable({} :: {
-    InstToObj: typeof(setmetatable({} :: {[Instance]: T}, {} :: {__mode: string})),
-    ObjToInst: typeof(setmetatable({} :: {[T]: Instance}, {} :: {__mode: string})),
-
-    OnObjectAdded: Signal.Signal<T, Instance>,
-    OnObjectRemoved: Signal.Signal<T, Instance>,
-}, {} :: ObjectStorageImpl<T>))
 
 local GlobalObjects = {
     Storages = {

@@ -22,7 +22,8 @@ local function requireFolder(folder)
 end
 
 local LoadModuleFolders : {Folder | ModuleScript} = {
-	ReplicatedStorage.Players, -- Load player data first
+	ClientScripts.Modules,
+	ClientScripts.Players, -- Load player data first
     ReplicatedStorage.Modules,
 	ClientScripts.GameLoader,
     ClientScripts.RenderHandlers,
@@ -36,7 +37,7 @@ for _, folder in ipairs(LoadModuleFolders) do
 	local start = os.clock()
     requireFolder(folder)
 	local finish = os.clock()
-	Logger.info(string.format("%s: %g", folder.Name, finish - start))
+	Logger.info(string.format("%s.%s: %g", folder.Parent.Name, folder.Name, finish - start))
 end
 
 Logger.info("------------------------------------------")
