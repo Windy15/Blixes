@@ -35,7 +35,8 @@ function Character.new(player)
         Instance = player.Character,
     }, Character)
 
-    self.Replicator = Replicator.new(self, (self.Instance :: any).ChangeValue)
+    local ReplicateValue = Instance.new("RemoteEvent", player.Character)
+    self.Replicator = Replicator.new(self, ReplicateValue)
 
     return self
 end

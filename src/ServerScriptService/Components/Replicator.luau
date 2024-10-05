@@ -42,7 +42,7 @@ end
 -- Adds the key to the replication queue with an optional replacement value
 function Replicator:Replicate(key, replacement)
     if table.find(self.PropertiesToReplicate, key) then
-        self.ReplicatingQueue[key] = replacement or {Value = self.Holder[key]}
+        self.ReplicatingQueue[key] = replacement or {Value = rawget(self.Holder, key)}
     end
 end
 

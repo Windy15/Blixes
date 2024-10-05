@@ -13,8 +13,8 @@ type SignalImpl<T...> = {
 	__type: "Signal",
 
 	new: () -> Signal<T...>,
-	Connect: (self: Signal<T...>, callback: (T...) -> ()) -> Connection<T...>,
-	Once: (self: Signal<T...>, callback: (T...) -> ()) -> (),
+	Connect: (self: Signal<T...>, callback: callback<T...>) -> Connection<T...>,
+	Once: (self: Signal<T...>, callback: callback<T...>) -> T...?,
 	Wait: (self: Signal<T...>, resumeTime: number?) -> (T...),
 	Fire: (self: Signal<T...>, T...) -> (),
 	Clear: (self: Signal<T...>) -> (),
@@ -85,7 +85,7 @@ function Signal.new<T...>(): Signal<T...>
 	}, Signal :: SignalImpl<T...>)
 end
 
-function Signal:Connect<T...>(callback: callback<T...>): Connection<T...>
+function Signal:Connect(callback)
 	local _connection = Connection.new(self, callback)
 
 	local oldhead = self._ConnectionList
@@ -134,7 +134,7 @@ function Signal:Wait(resumeTime: number?)
 	return coroutine.yield(yield._Callback)
 end
 
-function Signal:Once<T...>(callback: callback<T...>): Connection<T...>
+function Signal:Once(callback)
 	local _connection = Connection.new(self, callback)
 
 	if self._ConnectionList then

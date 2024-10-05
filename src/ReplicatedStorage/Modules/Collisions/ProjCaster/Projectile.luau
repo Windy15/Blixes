@@ -69,6 +69,14 @@ function Projectile:GetPivot()
     return CFrame.new(self.Position) * self.Rotation
 end
 
+function Projectile:GetFirstTrajectory()
+    local traj = self.TrajectoryList
+    while traj.Next do
+        traj = traj.Next
+    end
+    return traj
+end
+
 function Projectile:Destroy()
     if RunService:IsServer() then
         GlobalProjectiles[self.Id] = nil
@@ -77,6 +85,7 @@ function Projectile:Destroy()
 
     self.Caster.OnProjDestroyed:Fire(self)
 end
+
 
 local function calculatePosition(gravity: Vector3, velocity: Vector3, initPos: Vector3, time: number)
 	return 0.5 * gravity * time ^ 2 + velocity * time + initPos

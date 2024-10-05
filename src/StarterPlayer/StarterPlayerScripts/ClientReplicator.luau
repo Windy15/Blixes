@@ -30,7 +30,7 @@ ReplicationRemote.OnClientEvent:Connect(function(objId: string, property: string
     if typename then
         local deserializer = ClassDeserializers[typename]
         if deserializer then
-            object[property] = deserializer(value)
+            rawset(object, property, deserializer(value))
         else
             error("No deserialzier found for "..typename)
         end

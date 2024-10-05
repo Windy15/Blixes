@@ -70,7 +70,7 @@ local function replicateData(player: Player, objId: string, property: propertyNa
 end
 
 local function getSerializedValue(object, property)
-    local value = object[property]
+    local value = rawget(object, property)
 
     local typename = getSpecialType(value)
     if typename then
@@ -102,7 +102,7 @@ RunService.PreAnimation:Connect(function()
         if repData.IsReplicating then
             local objId = repData.ObjectId
             for property, playersToReplicate in repData.ReplicateQueue do
-                local value = object[property]
+                local value = rawget(object, property)
 
                 if repData.Owner then
                     replicateData(repData.Owner, objId, property, value)

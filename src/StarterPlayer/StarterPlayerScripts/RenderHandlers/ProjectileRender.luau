@@ -5,12 +5,14 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local PartCache = require(ReplicatedStorage.Modules.Parts.PartCache)
 local Projectile = require(ReplicatedStorage.Modules.Collisions.ProjCaster.Projectile)
+local Types = require(ReplicatedStorage.Modules.Collisions.ProjCaster.TypeHolder)
 
 local ProjectileRemotes = ReplicatedStorage.Remotes.Projectiles
 
 local CreateProjectile = ProjectileRemotes.CreateProjectile
 local UpdatePosition = ProjectileRemotes.UpdatePosition
 local RemoveProjectile = ProjectileRemotes.RemoveProjectile
+local RecreateProjectile = ProjectileRemotes.RecreateProjectile
 
 local RENDERS_INIT_SIZE = 1000
 
@@ -102,6 +104,13 @@ RemoveProjectile.OnClientEvent:Connect(function(projId: buffer) -- Destroy proje
         render.Model:Destroy()
         ProjectileRender.ReplicatedRenders[id] = nil
     end
+end)
+
+RecreateProjectile.OnClientEvent:Connect(function(origin: Vector3, velocity: Vector3, projectileFolder)
+    local module = projectileFolder:FindFirstChild("Caster")
+    assert(module, `ProjectileFolder {projectileFolder} has no Caster module`)
+    local Caster = require(module) :: Types.ProjCaster
+    Caster:Fire(origin, velocity)
 end)
 
 return ProjectileRender
