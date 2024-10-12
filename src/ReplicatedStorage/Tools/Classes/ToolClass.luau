@@ -11,14 +11,18 @@ local EnumState = require(ReplicatedStorage.Modules.General.EnumState)
 local GameEnums = require(ReplicatedStorage.GameEnums)
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
+local ToolRemotes = ReplicatedStorage.Remotes.Tools
+
 local Tool = {
 	__type = "Tool",
+	ToolName = "None",
 } :: ToolImpl
 Tool.__index = Tool
 
 type ToolImpl = {
 	__index: ToolImpl,
 	__type: string,
+	ToolName: "None",
 
 	new: (config: ToolConfig) -> ToolObject,
 	Init: (self: ToolObject) -> (),
@@ -67,11 +71,14 @@ end
 
 function Tool:Init()
 	assert(self.Instance, `Attempt to create tool {self.ToolName} with no instance`)
+
 	self.Cleaner:AddObject(self.Instance.Destroying:Connect(function() -- in case tool instance gets destroyed without object getting destroyed
 		self:Destroy()
 	end))
+
 	local toolFolder = ReplicatedStorage.Tools.Models:FindFirstChild(self.ToolName, true)
 	assert(toolFolder, `Tool {self.ToolName} has no Models folder`)
+
 	for _, animation in toolFolder.Animations:GetChildren() do
 		local track = (client.Character or client.CharacterAdded:Wait()).Humanoid:WaitForChild("Animator"):LoadAnimation(animation)
 		self.Animations[animation.Name] = track
@@ -90,22 +97,22 @@ function Tool:Equip()
 	if self.Equipped or not self.ToolState:IsState(GameEnums.ToolState.Idle) then return end
 	self.ToolState:SetState(GameEnums.ToolState.Equipping)
 
-	self.Instance.Remotes.Equip:FireServer()
+	ToolRemotes.Equip:FireServer()
 	self.Instance.Parent = self.Character
 	self.Equipped = true
 
-	local equipAnim = self.Player.Character:LoadAnimation(self.Instance.Animations.EquipAnimation)
+	local equipAnim = self.Player.Character:LoadAnimation(self.Animations.EquipAnimation)
 	self.CurrentAnim = equipAnim
 	equipAnim:Play()
-	equipAnim.Ended:Once(function()
+	self.Cleaner:AddObject(equipAnim.Ended:Once(function()
 		self.ToolState:SetState(GameEnums.ToolState.Idle)
-	end)
+	end))
 end
 
 function Tool:Unequip()
 	if not self.Equipped or not self.ToolState:IsState(GameEnums.ToolState.Idle) then return end
 
-	self.Instance.Remotes.Unequip:FireServer()
+	ToolRemotes.Unequip:FireServer()
 	self.Equipped = false
 end
 

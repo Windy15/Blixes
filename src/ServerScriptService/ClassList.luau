@@ -4,7 +4,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 
 local ClassFolders = {
     {"Tool", ServerScriptService.Tools.Classes}
-}
+} :: {any}
 
 local ClassList: {[string]: any} = {}
 
@@ -13,7 +13,7 @@ for _, categoryData in ipairs(ClassFolders) do
     ClassList[categoryData[1]] = category
     for _, module in ipairs(categoryData[2]:GetDescendants()) do
         if module:IsA("ModuleScript") then
-            category[module.Name] = require(module)
+            category[module.Name] = require(module) :: any
         end
     end
 end

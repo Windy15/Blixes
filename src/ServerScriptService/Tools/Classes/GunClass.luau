@@ -25,7 +25,8 @@ type GunImpl = typeof(setmetatable({} :: {
 	Init: (self: GunObject, config: InitConfig) -> (),
 	Shoot: (self: GunObject, origin: Vector3, direction: Vector3) -> (),
 	Reload: (self: GunObject) -> (),
-	GetReplicateConfig: (self: GunObject) -> {[any]: any}
+	GetReplicateConfig: (self: GunObject) -> {[any]: any},
+	Destroy: (self: GunObject) -> (),
 }, {} :: ToolClass.ToolImpl))
 
 export type GunConfig = ToolClass.ToolConfig & {
@@ -89,9 +90,9 @@ function Gun:Shoot(origin, direction)
 	if not self.GunState:IsState(GunState.Idle) then return end
 	self.GunState:SetState(GunState.Shooting)
 	self.Shooter:Fire(origin, direction)
-	task.delay(self.FireRate, function()
+	self.Cleaner:AddObject(task.delay(self.FireRate, function()
 		self.GunState:SetState(GunState.Idle)
-	end)
+	end))
 end
 
 function Gun:Reload()
@@ -101,6 +102,11 @@ function Gun:Reload()
 	self.Cleaner:AddObject(task.delay(self.ReloadTime, function()
 		self.GunState:SetState(GunState.Idle)
 	end))
+end
+
+function Gun:Destroy()
+	self.GunState:SetState(GunState.Idle)
+	ToolClass.Destroy(self)
 end
 
 return Gun

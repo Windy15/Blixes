@@ -31,7 +31,7 @@ function Gun:Reload()
 	if not self.GunState:IsState(GameEnums.GunState.Idle) then return end
 	self.GunState:SetState(GameEnums.GunState.Reloading)
 
-	local reloadAnim = self.Player.Character:LoadAnimation(self.Instance.Animations.ReloadAnimation)
+	local reloadAnim = self.Player.Character:LoadAnimation(self.Animations.ReloadAnimation)
 	reloadAnim:Play()
 
 	task.delay(self.ReloadTime, function()

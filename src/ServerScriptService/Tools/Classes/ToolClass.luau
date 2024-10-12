@@ -9,13 +9,17 @@ local Modifier = require(ReplicatedStorage.Components.Modifier)
 local Replicator = require(ServerScriptService.Components.Replicator)
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
+local ToolRemotes = ReplicatedStorage.Remotes.Tools
+
 local Tool = {
 	__type = "Tool",
+	ToolName = "None",
 } :: ToolImpl
 Tool.__index = Tool
 
 export type ToolImpl = {
 	__index: ToolImpl,
+	ToolName: "None",
 	__type: "Tool",
 
 	new: (config: ToolConfig) -> ToolObject,
@@ -27,7 +31,7 @@ export type ToolImpl = {
 }
 
 export type ToolConfig = {
-	ToolName: string,
+	
 }
 
 export type ToolObject = ToolConfig & typeof(setmetatable({} :: {
@@ -36,7 +40,6 @@ export type ToolObject = ToolConfig & typeof(setmetatable({} :: {
 
 	Equipped: boolean,
 	ToolState: EnumState.EnumState,
-	Cooldowns: {[string]: number},
 
 	OnEquipped: Signal.Signal<>,
 	OnUnequipped: Signal.Signal<>,
@@ -61,14 +64,13 @@ function Tool.new(config: ToolConfig)
 	self.Equipped = false
 	self.ToolState = EnumState.new(table.unpack(GameEnums.ToolState.OrderedItems))
 
-	self.Cooldowns = {}
 	self.Cleaner = Cleaner.new()
 
 	self.OnEquipped = self.Cleaner:AddObject(Signal.new())
 	self.OnUnequipped = self.Cleaner:AddObject(Signal.new())
 
 	self.Modifier = self.Cleaner:AddObject(Modifier.new(self))
-	self.Replicator = self.Cleaner:AddObject(Replicator.new(self, self.Instance.Remotes.ChangeValue))
+	self.Replicator = self.Cleaner:AddObject(Replicator.new(self, ToolRemotes.ChangeValue))
 
 	return self
 end
@@ -119,7 +121,7 @@ function Tool:SetPlayer(player)
 
 	if player then
 		if self.Instance then
-			self.Instance.Remotes.ReplicateObject:FireClient(player, self.ToolName, self:GetReplicateConfig())
+			ToolRemotes.ReplicateConfig:FireClient(player, self.ToolName, self:GetReplicateConfig())
 		end
 
 		self.Replicator.PlayersToReplicate[player] = true

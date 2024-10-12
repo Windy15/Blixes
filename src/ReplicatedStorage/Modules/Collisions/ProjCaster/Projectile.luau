@@ -91,7 +91,7 @@ local function calculatePosition(gravity: Vector3, velocity: Vector3, initPos: V
 	return 0.5 * gravity * time ^ 2 + velocity * time + initPos
 end
 
-local function calculateVelocity(gravity: Vector3, position: Vector3, initPos: Vector3, time: number)
+local function _calculateVelocity(gravity: Vector3, position: Vector3, initPos: Vector3, time: number)
 	return (-0.5 * gravity * time ^ 2 - initPos) / time
 end
 

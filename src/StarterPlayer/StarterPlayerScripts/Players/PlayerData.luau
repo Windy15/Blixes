@@ -1,7 +1,9 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local InventoryClass = require(ReplicatedStorage.Players.Inventory.InventoryClass)
+local ClientScripts = Players.LocalPlayer.PlayerScripts
+
+local InventoryClass = require(ClientScripts.Players.Inventory.InventoryClass)
 
 local RemotesPlayerData = ReplicatedStorage.Remotes.PlayerData
 

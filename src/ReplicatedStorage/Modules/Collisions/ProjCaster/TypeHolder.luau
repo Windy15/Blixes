@@ -54,6 +54,7 @@ export type ProjectileImpl = {
     ChangeVelocity: (self: Projectile, velocity: Vector3) -> (),
     ApplyImpulse: (self: Projectile, velocity: Vector3) -> (),
     GetPivot: (self: Projectile) -> CFrame,
+    GetFirstTrajectory: (self: Projectile) -> Trajectory,
     Destroy: (self: Projectile) -> (),
 }
 

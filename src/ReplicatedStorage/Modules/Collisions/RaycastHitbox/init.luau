@@ -24,7 +24,6 @@ export type RaycastHitbox = typeof(setmetatable({} ::{
 	RayPointName: string,
 	Visualize: boolean,
 	RaycastOnShapecast: boolean,
-	UpdateAttributes: boolean,
 	ShallowAttachments: boolean,
 
 	BlockCastFaceDirection: boolean,
@@ -54,7 +53,6 @@ function RaycastHitbox.new(model: Instance, rayParams: RaycastParams?, hitOnce: 
 		RayPointName = DEFAULT_RAY_POINT_NAME, -- the names of the attachments which will be turned into ray points
 		Visualize = false, -- Debug visualizer
 		RaycastOnShapecast = true, -- Combines regular raycasting with shapecasts to deal with the shapecast limitations
-		UpdateAttributes = false, -- If true properties and attributes of ray points don't get cached and will update (could affect performance)
 		ShallowAttachments = false, -- Whether to only get children and not descendents of "Model"
 
 		BlockCastFaceDirection = true, -- If BlockCasting faces the direction it goes (takes RayOrientation attribute into account aswell)
@@ -87,60 +85,49 @@ function RaycastHitbox:StartHit()
 	end
 	if self._HitConnection then return end
 
-	local RayPointsTable = {} :: {any}
+	local RayPointsTable = {} :: {{
+		RayEnabled: boolean,
+		RayPointType: string,
+		Attachment: Attachment,
+		Position: Vector3,
+		LastPosition: Vector3,
+		RaySize: Vector3,
+		RayOrientation: CFrame,
+	}}
 	local attachments = self.ShallowAttachments and self.Model:GetChildren() or self.Model:GetDescendants()
 
 	for _, att: Attachment in ipairs(attachments) do
 		if att.Name ~= self.RayPointName then continue end
 
 		if att:IsA("Attachment") then
-			if not self.UpdateAttributes then
-				local rayEnabled = att:GetAttribute("RayEnabled")
-				rayEnabled = rayEnabled ~= false
+			local rayEnabled = att:GetAttribute("RayEnabled") :: boolean
+			rayEnabled = rayEnabled ~= false
 
-				local raySize, rayOrientation = att:GetAttribute("RaySize"), att:GetAttribute("RayOrientation") :: Vector3?
+			local raySize, rayOrientation = att:GetAttribute("RaySize") :: Vector3, att:GetAttribute("RayOrientation") :: Vector3?
 
-				table.insert(RayPointsTable, {
-					RayEnabled = rayEnabled,
-					RayPointType = att:GetAttribute("RayPointType") or RAY_CAST_NAME,
-					Attachment = att,
-					Position = att.Position,
-					LastPosition = att.WorldPosition,
-					RaySize = raySize or Vector3.zero,
-					RayOrientation = if rayOrientation then CFrame.fromOrientation(rayOrientation.X, rayOrientation.Y, rayOrientation.Z) else CFrame.identity
-				})
-			else
-				table.insert(RayPointsTable, {
-					Attachment = att,
-					LastPosition = att.WorldPosition -- Last Position
-				})
-			end
+			table.insert(RayPointsTable, {
+				RayEnabled = rayEnabled,
+				RayPointType = (att:GetAttribute("RayPointType") :: string) or RAY_CAST_NAME,
+				Attachment = att,
+				Position = att.Position,
+				LastPosition = att.WorldPosition,
+				RaySize = raySize or Vector3.zero,
+				RayOrientation = if rayOrientation then CFrame.fromOrientation(rayOrientation.X, rayOrientation.Y, rayOrientation.Z) else CFrame.identity
+			})
 		end
 	end
 
 	self._HitConnection = RunService.PostSimulation:Connect(function()
 		for _, point in ipairs(RayPointsTable) do
-			local rayEnabled = (self.UpdateAttributes and point.Attachment:GetAttribute("RayEnabled") or point.RayEnabled)
+			local rayEnabled = point.RayEnabled
 			rayEnabled = rayEnabled ~= false
 			if not rayEnabled then continue end
 
-			local rayPointType
-			local raySize
-			local rayOrientation
-			local pos
-
-			if self.UpdateAttributes then
-				rayPointType = point.Attachment:GetAttribute("RayPointType")
-				raySize = point.Attachment:GetAttribute("RaySize")
-				rayOrientation = point.Attachment:GetAttribute("RayOrientation")
-				pos = point.Attachment.WorldPosition
-			else
-				rayPointType = point.RayPointType
-				raySize = point.RaySize
-				rayOrientation = point.RayOrientation
-				local partCFrame = point.Attachment.Parent.CFrame
-				pos = partCFrame.Position + point.Position
-			end
+			local rayPointType = point.RayPointType
+			local raySize = point.RaySize
+			local rayOrientation = point.RayOrientation
+			local partCFrame = (point.Attachment.Parent :: BasePart).CFrame
+			local pos = partCFrame.Position + point.Position
 
 			local lastPos = point.LastPosition
 
