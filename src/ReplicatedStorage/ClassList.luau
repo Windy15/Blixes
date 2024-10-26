@@ -1,27 +1,29 @@
+--!strict
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local ClassFolders = {
-    {"Tool", ReplicatedStorage.Tools.Classes}
-}
+    Tool = ReplicatedStorage.Tools.Classes
+} :: {[string]: Folder}
 
-local ClassList = {}
+local ClassListMeta = {}
+ClassListMeta.__index = ClassListMeta
 
-for _, categoryData in ipairs(ClassFolders) do
+local ClassList = setmetatable({} :: {[string]: any}, ClassListMeta)
+
+for name, folder in ClassFolders do
     local category = {}
-    ClassList[categoryData[1]] = category
-    for _, module in ipairs(categoryData[2]:GetDescendants()) do
+    ClassList[name] = category
+    for _, module in folder:GetDescendants() do
         if module:IsA("ModuleScript") then
-            category[module.Name] = module
+            category[module.Name] = require(module) :: any
         end
     end
 end
 
-function ClassList:GetClass(categoryName: string, className: string)
-	local category = self[categoryName]
-    if not category then
-        error(`Invalid Category Name "{categoryName}"`, 2)
-    end
-    return category[className]
+function ClassListMeta:GetToolClass(toolName: string)
+    local class = ClassList.Tool[toolName]
+    return (assert(class, `Tool class for '{toolName}' does not exist`))
 end
 
 return ClassList

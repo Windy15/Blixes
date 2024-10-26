@@ -4,7 +4,7 @@ local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
 local Types = {}
 
-export type Holder = {}
+export type Holder = any
 
 type ShootComponentImpl = {
     __index: ShootComponentImpl,

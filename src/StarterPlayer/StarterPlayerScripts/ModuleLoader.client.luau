@@ -7,15 +7,15 @@ local Logger = require(ReplicatedStorage.Modules.General.Logger)
 
 local ClientScripts = Players.LocalPlayer.PlayerScripts
 
-local function requireFolder(folder)
+local function requireFolder(folder: Folder | Actor)
 	if folder:IsA("ModuleScript") then
 		require(folder)
 	end
 
-	for _, module in ipairs(folder:GetChildren()) do
+	for _, module in folder:GetChildren() do
 		if module:IsA("ModuleScript") then
 			require(module)
-		elseif module:IsA("Folder") then
+			elseif module:IsA("Folder") or module:IsA("Actor") then
 			requireFolder(module)
 		end
 	end

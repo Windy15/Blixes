@@ -8,17 +8,18 @@ type ModifierImpl = {
     __index: ModifierImpl,
 
     new: (holder: Types.Holder, ...string) -> Modifier,
-    RegisterProperty: (self: Modifier, property: string) -> (),
-    GetModified: (self: Modifier, property: string) -> number,
-    AddModifyFunc: (self: Modifier, property: string, func: modfunc) -> (),
-    RemoveModifyFunc: (self: Modifier, property: string, func: modfunc) -> boolean,
+    RegisterProperty: (self: Modifier, stat: string) -> (),
+    GetModified: (self: Modifier, stat: string, customValue: number?) -> number,
+    AddModifyFunc: (self: Modifier, stat: string, func: modfunc) -> (),
+    RemoveModifyFunc: (self: Modifier, stat: string, func: modfunc) -> boolean,
+    GetModifyTable: (self: Modifier, stat: string) -> ModifyTable,
 
     Destroy: (self: Modifier) -> (),
 }
 
 export type Modifier = typeof(setmetatable({} :: {
     Holder: Types.Holder,
-    Properties: {
+    Stats: {
         [string]: ModifyTable
     }
 }, {} :: ModifierImpl))
@@ -45,25 +46,25 @@ Modifier.__index = Modifier
 function Modifier.new(holder, ...)
     local self = setmetatable({
         Holder = holder,
-        Properties = {}
+        Stats = {}
     }, Modifier) :: Modifier
 
     for i = 1, select("#", ...) do
-        self.Properties[select(i, ...)] = ModifyTable.new()
+        self.Stats[select(i, ...)] = ModifyTable.new()
     end
 
     return self
 end
 
-function Modifier:RegisterProperty(property)
-    if not self.Properties[property] then
-        self.Properties[property] = ModifyTable.new()
+function Modifier:RegisterProperty(stat)
+    if not self.Stats[stat] then
+        self.Stats[stat] = ModifyTable.new()
     end
 end
 
-function Modifier:GetModified(property)
-    local value = self.Holder[property]
-    local modify = self.Properties[property]
+function Modifier:GetModified(stat, customValue)
+    local value = customValue or self.Holder[stat]
+    local modify = self.Stats[stat]
     if not modify then return value end
 
     value = value * modify.Multiplier + modify.Adder
@@ -74,21 +75,21 @@ function Modifier:GetModified(property)
     return value
 end
 
-local function checkProperty(self: Modifier, property: string)
-    local modify = self.Properties[property]
+local function checkProperty(self: Modifier, stat: string)
+    local modify = self.Stats[stat]
     if not modify then
-        error(`Could not find property {property} in Modifier`, 2)
+        error(`Could not find stat {stat} in Modifier`, 2)
     end
     return modify
 end
 
-function Modifier:AddModifyFunc(property, func)
-    local modify = checkProperty(self, property)
+function Modifier:AddModifyFunc(stat, func)
+    local modify = checkProperty(self, stat)
     table.insert(modify.ModifyFunctions, func)
 end
 
-function Modifier:RemoveModifyFunc(property, func)
-    local modify = checkProperty(self, property)
+function Modifier:RemoveModifyFunc(stat, func)
+    local modify = checkProperty(self, stat)
     local index = table.find(modify.ModifyFunctions, func)
     if index then
         table.remove(modify.ModifyFunctions, index)
@@ -97,8 +98,12 @@ function Modifier:RemoveModifyFunc(property, func)
     return false
 end
 
+function Modifier:GetModifyTable(stat)
+    return self.Stats[stat]
+end
+
 function Modifier:Destroy()
-    table.clear(self.Properties)
+    table.clear(self.Stats)
 end
 
 return Modifier

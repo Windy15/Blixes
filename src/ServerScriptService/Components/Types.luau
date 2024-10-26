@@ -8,7 +8,7 @@ local Types = {}
 
 export type Holder = {
     Player: Player
-}
+} | any
 
 type ShootComponentImpl = {
     __index: ShootComponentImpl,

@@ -1,4 +1,5 @@
 --!strict
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Types = require(ReplicatedStorage.Components.Types)
@@ -9,7 +10,7 @@ type ActionBinderImpl = {
     new: (holder: Types.Holder) -> (),
 
     BindAction: (self: ActionBinder, actionName: string, func: actionFunc) -> (),
-    BindKeyToAction: (self: ActionBinder, actionName: string, key: Enum.UserInputState, inputEvent: RBXScriptSignal) -> (),
+    BindEventToAction: (self: ActionBinder, actionName: string, inputEvent: RBXScriptSignal) -> (),
 
     Destroy: (self: ActionBinder) -> (),
 }
@@ -21,16 +22,16 @@ export type ActionBinder = typeof(setmetatable({} :: {
 }, {} :: ActionBinderImpl))
 
 type Action = {
-    Function: (InputObject, boolean) -> (),
-    Keybinds: {[EnumItem]: {InputEvent: RBXScriptSignal, Connection: RBXScriptConnection}}
+    Function: actionFunc,
+    InputEvents: {[RBXScriptSignal]: RBXScriptConnection}
 }
 
 local Action = {}
 
-function Action.new()
+function Action.new(): Action
     return {
         Function = function() end,
-        Keybinds = {},
+        InputEvents = {},
     }
 end
 
@@ -50,9 +51,10 @@ function ActionBinder:BindAction(actionName, func)
         action = Action.new()
         self.Actions[actionName] = action
     else
-        for _, keybindData in action.Keybinds do
-            keybindData.Connection:Disconnect()
-            keybindData.Connection = keybindData.InputEvent:Connect(func)
+        -- update all input events to use new function
+        for event, connection in action.InputEvents do
+            connection:Disconnect()
+            action.InputEvents[event] = event:Connect(func)
         end
     end
     action.Function = func
@@ -66,20 +68,19 @@ local function checkAction(self: ActionBinder, actionName: string)
     return action
 end
 
-function ActionBinder:BindKeyToAction(actionName, key, inputEvent)
+function ActionBinder:BindEventToAction(actionName, inputEvent)
     local action = checkAction(self, actionName)
-    local KeybindData = action.Keybinds[key]
-    if KeybindData then
-        KeybindData.Connection:Disconnect()
+    local connection = action.InputEvents[inputEvent]
+    if connection then
+        connection:Disconnect()
     end
-    KeybindData.InputEvent = inputEvent
-    KeybindData.Connection = inputEvent:Connect(action.Function)
+    action.InputEvents[inputEvent] = inputEvent:Connect(action.Function)
 end
 
 function ActionBinder:Destroy()
     for name, action in self.Actions do
-        for _, keybindData in action.Keybinds do
-            keybindData.Connection:Disconnect()
+        for _, connection in action.InputEvents do
+            connection:Disconnect()
         end
         self.Actions[name] = nil
     end

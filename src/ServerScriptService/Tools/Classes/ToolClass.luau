@@ -1,3 +1,5 @@
+--!strict
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -41,13 +43,18 @@ export type ToolObject = ToolConfig & typeof(setmetatable({} :: {
 	Equipped: boolean,
 	ToolState: EnumState.EnumState,
 
-	OnEquipped: Signal.Signal<>,
-	OnUnequipped: Signal.Signal<>,
+	Actions: {[string]: any},
+
+	DisplayName: string,
 
 	Modifier: Modifier.Modifier,
 	Replicator: Replicator.Replicator,
 
 	Cleaner: Cleaner.Cleaner,
+
+	OnInitialized: Signal.Signal<>,
+	OnEquipped: Signal.Signal<>,
+	OnUnequipped: Signal.Signal<>,
 
 	_Initialized: boolean,
 }, {} :: ToolImpl))
@@ -64,13 +71,18 @@ function Tool.new(config: ToolConfig)
 	self.Equipped = false
 	self.ToolState = EnumState.new(table.unpack(GameEnums.ToolState.OrderedItems))
 
-	self.Cleaner = Cleaner.new()
+	self.Actions = {}
 
-	self.OnEquipped = self.Cleaner:AddObject(Signal.new())
-	self.OnUnequipped = self.Cleaner:AddObject(Signal.new())
+	self.DisplayName = "Default Tool"
+
+	self.Cleaner = Cleaner.new()
 
 	self.Modifier = self.Cleaner:AddObject(Modifier.new(self))
 	self.Replicator = self.Cleaner:AddObject(Replicator.new(self, ToolRemotes.ChangeValue))
+
+	self.OnInitialized = self.Cleaner:AddObject(Signal.new())
+	self.OnEquipped = self.Cleaner:AddObject(Signal.new())
+	self.OnUnequipped = self.Cleaner:AddObject(Signal.new())
 
 	return self
 end
@@ -82,7 +94,7 @@ function Tool:Init(config)
 	end
 	local toolClone = toolFolder.Tool:Clone()
 
-	toolClone.Name = self.ToolName
+	toolClone.Name = self.DisplayName
 
 	if self.Player then
 		self:SetPlayer(self.Player)
@@ -98,18 +110,15 @@ function Tool:Init(config)
 
 	self._Initialized = true
 
+	self.OnInitialized:Fire()
+	self.OnInitialized:Destroy()
+
 	return toolClone
 end
 
 function Tool:SetValue(property: string, value: any)
 	self[property] = value
 	self.Replicator:Replicate(property, value)
-end
-
-function Tool:Destroy()
-	self.Cleaner:Flush()
-	if self.Instance then self.Instance:Destroy() end
-	GlobalObjects.Storages.Tools:RemoveObject(self.Instance)
 end
 
 function Tool:GetReplicateConfig()
@@ -128,6 +137,12 @@ function Tool:SetPlayer(player)
 	else
 		self.Instance.Parent = nil
 	end
+end
+
+function Tool:Destroy()
+	self.Cleaner:Flush()
+	if self.Instance then self.Instance:Destroy() end
+	GlobalObjects.Storages.Tools:RemoveObject(self.Instance)
 end
 
 return Tool

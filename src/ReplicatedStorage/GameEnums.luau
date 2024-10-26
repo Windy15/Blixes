@@ -14,7 +14,7 @@ local GameEnums = {
         Reloading = 3,
     },
 
-    GunMode = {
+    FiringMode = {
         Semi = 1,
         Auto = 2,
         Burst = 3,

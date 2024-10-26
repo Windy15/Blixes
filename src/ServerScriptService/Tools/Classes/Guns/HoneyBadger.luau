@@ -1,3 +1,5 @@
+--!strict
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -15,22 +17,23 @@ local BaseStats = {
 	ReloadTime = 1,
 }
 
-local HoneyBadger = setmetatable({
+local HoneyBadger = {
 	ToolName = "HoneyBadger",
 	BaseStats = BaseStats
-}, GunClass)
-HoneyBadger.__index = HoneyBadger
+}
 
-function HoneyBadger.new(config)
-	local self = setmetatable(GunClass.new({
+function HoneyBadger.new(config, initConfig)
+	local self = GunClass.new({
+		ToolClass = HoneyBadger,
 		DisplayName = "Honey Badger",
 
 		Damage = BaseStats.Damage,
 		FireRate = BaseStats.FireRate,
 		ReloadTime = BaseStats.ReloadTime,
 
-		FiringMode = EnumState.new(GameEnums.GunMode.Auto, GameEnums.GunMode.Semi),
-	}), HoneyBadger)
+		FiringMode = EnumState.new(GameEnums.FiringMode.Auto, GameEnums.FiringMode.Semi),
+	}, initConfig)
+
 	self.Shooter = ProjShooter.new(self, ProjCaster.new({
 		DestroyOnHit = true,
 	}), Bullet)
@@ -41,7 +44,7 @@ function HoneyBadger.new(config)
 		end
 	end
 
-	return setmetatable(GunClass.new(self), HoneyBadger)
+	return self
 end
 
 return HoneyBadger

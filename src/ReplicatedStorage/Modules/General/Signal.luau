@@ -2,7 +2,7 @@
 --!strict
 
 --[[
-	O(1) connect, disconnect, once
+	O(1) connect, disconnect
 	O(n) fire
 ]]
 
@@ -14,9 +14,10 @@ type SignalImpl<T...> = {
 
 	new: () -> Signal<T...>,
 	Connect: (self: Signal<T...>, callback: callback<T...>) -> Connection<T...>,
-	Once: (self: Signal<T...>, callback: callback<T...>) -> T...?,
+	Once: (self: Signal<T...>, callback: callback<T...>) -> Connection<T...>,
 	Wait: (self: Signal<T...>, resumeTime: number?) -> (T...),
 	Fire: (self: Signal<T...>, T...) -> (),
+	OrderFire: (self: Signal<T...>, T...) -> (),
 	Clear: (self: Signal<T...>) -> (),
 	Destroy: (self: Signal<T...>) -> ()
 }
@@ -189,6 +190,33 @@ function Signal:Fire(...)
 		end
 		coroutine.resume(freeRunnerThread :: thread, _connection._Callback, ...)
 		_connection = _connection._Next
+	end
+
+	local yield = self._YieldList
+
+	while yield do
+		coroutine.resume(yield._Callback :: thread, ...)
+		yield = yield._Next
+		self._YieldList = yield
+	end
+end
+
+function Signal:OrderFire(...)
+	local _connection = self._ConnectionList
+
+	local connections: {Connection<typeof(...)>} = {}
+
+	while _connection do
+		table.insert(connections, 1, _connection)
+		_connection = _connection._Next
+	end
+
+	for _, cn in connections do
+		if not freeRunnerThread then
+			freeRunnerThread = coroutine.create(runEventHandlerInFreeThread)
+			coroutine.resume(freeRunnerThread :: any)
+		end
+		coroutine.resume(freeRunnerThread :: thread, cn._Callback, ...)
 	end
 
 	local yield = self._YieldList

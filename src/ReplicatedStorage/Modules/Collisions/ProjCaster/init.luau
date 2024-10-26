@@ -38,7 +38,9 @@ function ProjCaster.new(config: TypeHolder.ProjConfig)
 end
 
 function ProjCaster:Fire(origin: Vector3, velocity: Vector3)
-    return Projectile.new(self, origin, velocity)
+    local cast = Projectile.new(self, origin, velocity)
+    self.OnProjCreated:Fire(cast)
+    return cast
 end
 
 return ProjCaster

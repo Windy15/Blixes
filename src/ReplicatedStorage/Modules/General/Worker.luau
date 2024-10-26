@@ -1,11 +1,10 @@
---!native
 --!strict
 
 local RunService = game:GetService("RunService")
 
 export type Worker = typeof(setmetatable({} :: {
     ResumedTime: number,
-    MaxTime: number,
+    TimeLimit: number,
     SimulationEvent: RBXScriptSignal,
     Thread: thread,
 }, {} :: WorkerImpl))
@@ -13,7 +12,7 @@ export type Worker = typeof(setmetatable({} :: {
 type WorkerImpl = {
     __index: WorkerImpl,
 
-    new: (maxTime: number, simulationEvent: RBXScriptSignal) -> Worker,
+    new: (timeLimit: number, simulationEvent: RBXScriptSignal) -> Worker,
     Start: (self: Worker) -> (),
     Step: (self: Worker) -> (),
 }
@@ -28,11 +27,11 @@ local YieldingWorkers = {
     [RunService.PostSimulation] = {},
 } :: {[RBXScriptSignal]: {Worker}}
 
-function Worker.new(maxTime, simulationEvent)
+function Worker.new(timeLimit, simulationEvent)
     assert(YieldingWorkers[simulationEvent], "Invalid simulation event")
     return setmetatable({
         ResumedTime = os.clock(),
-        MaxTime = maxTime,
+        TimeLimit = timeLimit,
         SimulationEvent = simulationEvent,
         Thread = coroutine.running(),
     }, Worker)
@@ -43,20 +42,18 @@ function Worker:Start()
 end
 
 function Worker:Step()
-    if os.clock() - self.ResumedTime > self.MaxTime then
+    if os.clock() - self.ResumedTime > self.TimeLimit then
         self.Thread = coroutine.running()
         table.insert(YieldingWorkers[self.SimulationEvent], self)
         coroutine.yield()
     end
 end
 
-for event, yields in YieldingWorkers do
-    event:Connect(function()
-        local copy: typeof(yields) = table.create(#yields)
-        for i, worker in copy do
-            yields[i] = nil
-            copy[i] = worker
-        end
+for simulationEvent, yields in YieldingWorkers do
+    simulationEvent:Connect(function()
+        local copy: typeof(yields) = table.clone(yields)
+        table.clear(yields)
+        -- clone and clear yields table to deal with race conditions
         for _, worker in copy do
             worker:Start()
             coroutine.resume(worker.Thread)

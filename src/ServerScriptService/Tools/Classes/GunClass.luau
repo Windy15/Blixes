@@ -12,22 +12,15 @@ local ToolClass = require(ServerScriptService.Tools.Classes.ToolClass)
 
 local GunState = GameEnums.GunState
 
-local Gun = setmetatable({
+local Gun = {
 	ToolType = "Gun",
-}, ToolClass) :: GunImpl
-Gun.__index = Gun
+} :: GunImpl
 
-type GunImpl = typeof(setmetatable({} :: {
-	__index: GunImpl,
+type GunImpl = {
 	ToolType: "Gun",
 
-	new: (config: GunConfig) -> GunObject,
-	Init: (self: GunObject, config: InitConfig) -> (),
-	Shoot: (self: GunObject, origin: Vector3, direction: Vector3) -> (),
-	Reload: (self: GunObject) -> (),
-	GetReplicateConfig: (self: GunObject) -> {[any]: any},
-	Destroy: (self: GunObject) -> (),
-}, {} :: ToolClass.ToolImpl))
+	new: (config: GunConfig, initConfig: InitConfig?) -> GunObject
+}
 
 export type GunConfig = ToolClass.ToolConfig & {
 	DisplayName: string,
@@ -43,50 +36,21 @@ type InitConfig = {
 	_CreateDamageConnection: boolean?
 }
 
-export type GunObject = ToolClass.ToolObject & GunConfig & typeof(setmetatable({} :: {
+export type GunObject = ToolClass.ToolObject & GunConfig & {
+	ToolCategory: GunImpl,
 	GunState: EnumState.EnumState,
 
 	Shooter: ComponentTypes.ShootComponent,
+	Actions: {
+		Shoot: (self: GunObject, origin: Vector3, direction: Vector3) -> (),
+		Reload: (self: GunObject) -> (),
+	},
 
 	OnShot: Signal.Signal<>,
 	OnReloading: Signal.Signal<>,
-}, setmetatable({}, {}) :: GunImpl))
+}
 
-
-function Gun.new(config): GunObject
-	local self = setmetatable(ToolClass.new(config), Gun) :: GunObject
-
-	self.GunState = self.GunState or EnumState.new(table.unpack(GunState.OrderedItems))
-
-	self.OnShot = self.Cleaner:AddObject(Signal.new())
-	self.OnReloading = self.Cleaner:AddObject(Signal.new())
-
-	return self
-end
-
-function Gun:Init(config)
-	ToolClass.Init(self, config)
-
-	if config._CreateDamageConnection then
-		self.Shooter.OnHit:Connect(function(result)
-			local char = Characters:GetCharFromInstance(result.Instance)
-			if char then
-				char:TakeDamage(self.Damage)
-			end
-		end)
-	end
-end
-
-function Gun:GetReplicateConfig()
-	local config = ToolClass.GetReplicateConfig(self)
-	config.FiringMode = EnumState.toIds(self.FiringMode)
-	config.Damage = self.Damage
-	config.FireRate = self.FireRate
-	config.ReloadTime = self.ReloadTime
-	return config
-end
-
-function Gun:Shoot(origin, direction)
+local function defaultShoot(self: GunObject, origin: Vector3, direction: Vector3)
 	if not self.GunState:IsState(GunState.Idle) then return end
 	self.GunState:SetState(GunState.Shooting)
 	self.Shooter:Fire(origin, direction)
@@ -95,7 +59,7 @@ function Gun:Shoot(origin, direction)
 	end))
 end
 
-function Gun:Reload()
+local function defaultReload(self: GunObject)
 	if not self.GunState:IsState(GunState.Idle) then return end
 	self.GunState:SetState(GunState.Reloading)
 
@@ -104,9 +68,34 @@ function Gun:Reload()
 	end))
 end
 
-function Gun:Destroy()
-	self.GunState:SetState(GunState.Idle)
-	ToolClass.Destroy(self)
+function Gun.new(config, initConfig)
+	local self = ToolClass.new(config) :: GunObject
+
+	self.ToolCategory = Gun
+
+	self.FiringMode = EnumState.new(table.unpack(GameEnums.FiringMode.OrderedItems))
+	self.GunState = self.GunState or EnumState.new(table.unpack(GunState.OrderedItems))
+
+	self.Actions.Shoot = defaultShoot
+	self.Actions.Reload = defaultReload
+
+	self.OnShot = self.Cleaner:AddObject(Signal.new())
+	self.OnReloading = self.Cleaner:AddObject(Signal.new())
+
+	if initConfig then
+		self.OnInitialized:Connect(function()
+			if initConfig._CreateDamageConnection then
+				self.Shooter.OnHit:Connect(function(result)
+					local char = Characters:GetCharFromInstance(result.Instance)
+					if char then
+						char:TakeDamage(self.Damage)
+					end
+				end)
+			end
+		end)
+	end
+
+	return self
 end
 
 return Gun

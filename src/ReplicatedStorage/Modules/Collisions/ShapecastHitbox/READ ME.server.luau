@@ -1,5 +1,5 @@
 --[[
-		Create a new RaycastHitbox Object with "RaycastHitbox.new(model: Instance?, rayParams: RaycastParams?, humanoidOnly: boolean?)"
+		Create a new ShapecastHitbox Object with "ShapecastHitbox.new(model: Instance?, rayParams: RaycastParams?, humanoidOnly: boolean?)"
 			- "model" is the Instance which the RayPoint attachments reside in
 			- "rayParams" are the RaycastParams for the RayPoints
 			- "humanoidOnly" if set to true, the hitbox only fires 'OnHit' when it comes into contact with a part who's model ancestor has a humanoid

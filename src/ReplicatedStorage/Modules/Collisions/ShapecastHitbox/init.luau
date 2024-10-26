@@ -6,16 +6,16 @@ local RunService = game:GetService("RunService")
 
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
 
-type RaycastHitboxImpl = {
-	__index: RaycastHitboxImpl,
-	__type: "RaycastHitbox",
+type ShapecastHitboxImpl = {
+	__index: ShapecastHitboxImpl,
+	__type: "ShapecastHitbox",
 
-	new: (model: Instance, rayParams: RaycastParams?, hitOnce: boolean?, humanoidOnly: boolean?) -> RaycastHitbox,
-	StartHit: (self: RaycastHitbox) -> (),
-	EndHit: (self: RaycastHitbox) -> (),
+	new: (model: Instance, rayParams: RaycastParams?, hitOnce: boolean?, humanoidOnly: boolean?) -> ShapecastHitbox,
+	StartHit: (self: ShapecastHitbox) -> (),
+	EndHit: (self: ShapecastHitbox) -> (),
 }
 
-export type RaycastHitbox = typeof(setmetatable({} ::{
+export type ShapecastHitbox = typeof(setmetatable({} ::{
 	Model: Instance,
 	RaycastParams: RaycastParams,
 	HitOnce: boolean,
@@ -31,7 +31,7 @@ export type RaycastHitbox = typeof(setmetatable({} ::{
 	OnHit: Signal.Signal<RaycastResult, Attachment, Humanoid?>,
 
 	_HitConnection: RBXScriptConnection?,
-}, {} :: RaycastHitboxImpl))
+}, {} :: ShapecastHitboxImpl))
 
 local DEFAULT_RAY_POINT_NAME = "HitPoint"
 
@@ -39,11 +39,11 @@ local RAY_CAST_NAME = "Line"
 local SPHERE_CAST_NAME = "Sphere"
 local BLOCK_CAST_NAME = "Block"
 
-local RaycastHitbox = {} :: RaycastHitboxImpl
-RaycastHitbox.__index = RaycastHitbox
-RaycastHitbox.__type = "RaycastHitbox"
+local ShapecastHitbox = {} :: ShapecastHitboxImpl
+ShapecastHitbox.__index = ShapecastHitbox
+ShapecastHitbox.__type = "ShapecastHitbox"
 
-function RaycastHitbox.new(model: Instance, rayParams: RaycastParams?, hitOnce: boolean?, humanoidOnly: boolean?): RaycastHitbox
+function ShapecastHitbox.new(model: Instance, rayParams: RaycastParams?, hitOnce: boolean?, humanoidOnly: boolean?): ShapecastHitbox
 	local self = setmetatable({
 		Model = model,
 		RaycastParams = rayParams or RaycastParams.new(),
@@ -58,7 +58,7 @@ function RaycastHitbox.new(model: Instance, rayParams: RaycastParams?, hitOnce: 
 		BlockCastFaceDirection = true, -- If BlockCasting faces the direction it goes (takes RayOrientation attribute into account aswell)
 
 		OnHit = Signal.new()
-	}, RaycastHitbox)
+	}, ShapecastHitbox)
 
 	return self
 end
@@ -79,9 +79,9 @@ local function CreateAdornment(pos, lastPos)
 	end)
 end
 
-function RaycastHitbox:StartHit()
+function ShapecastHitbox:StartHit()
 	if not self.Model then
-		error("RaycastHitbox object must have a \"Model\" before :StartHit()", 2)
+		error("ShapecastHitbox object must have a \"Model\" before :StartHit()", 2)
 	end
 	if self._HitConnection then return end
 
@@ -177,7 +177,7 @@ function RaycastHitbox:StartHit()
 							self.RaycastParams.FilterDescendantsInstances = filterTable
 						end
 					else
-						warn(`Unknown RaycastFilterType for RaycastHitbox {self} with model {self.Model}`)
+						warn(`Unknown RaycastFilterType for ShapecastHitbox {self} with model {self.Model}`)
 					end
 				end
 
@@ -197,7 +197,7 @@ function RaycastHitbox:StartHit()
 	end)
 end
 
-function RaycastHitbox:EndHit()
+function ShapecastHitbox:EndHit()
 	local HitConnection = self._HitConnection
 	if HitConnection then
 		HitConnection:Disconnect()
@@ -205,4 +205,4 @@ function RaycastHitbox:EndHit()
 	end
 end
 
-return RaycastHitbox
+return ShapecastHitbox

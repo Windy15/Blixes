@@ -41,8 +41,10 @@ export type ToolObject = ToolConfig & typeof(setmetatable({} ::  {
 	ToolState: EnumState.EnumState,
 	Equipped: boolean,
 
+	Actions: {[string]: any},
 	Animations: {[string]: AnimationTrack},
 
+	OnInitialized: Signal.Signal<>,
 	OnEquipped: Signal.Signal<>,
 	OnUnequipped: Signal.Signal<>,
 
@@ -57,12 +59,14 @@ function Tool.new(config)
 	self.Equipped = false
 	self.ToolState = EnumState.new(table.unpack(GameEnums.ToolState.OrderedItems))
 
+	self.Actions = {}
 	self.Animations = {}
 
 	self.Cleaner = Cleaner.new()
 
 	self.ActionBinder = self.Cleaner:AddObject(ActionBinder.new(self))
 
+	self.OnInitialized = self.Cleaner:AddObject(Signal.new())
 	self.OnEquipped = self.Cleaner:AddObject(Signal.new())
 	self.OnUnequipped = self.Cleaner:AddObject(Signal.new())
 
@@ -84,6 +88,9 @@ function Tool:Init()
 		self.Animations[animation.Name] = track
 		self.Cleaner:AddObject(track)
 	end
+
+	self.OnInitialized:Fire()
+	self.OnInitialized:Destroy()
 end
 
 function Tool:Destroy()
