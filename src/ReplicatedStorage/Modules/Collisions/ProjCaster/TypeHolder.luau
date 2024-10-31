@@ -14,7 +14,7 @@ export type ProjConfig = {
 
     Gravity: Vector3?,
 
-    CalculateHit: CalculateHit?,
+    HitFuncName: string?,
 
     UserData: {[string]: any}?,
 }
@@ -33,7 +33,7 @@ export type ProjCaster = typeof(setmetatable({} :: {
 
     Gravity: Vector3,
 
-    CalculateHit: CalculateHit,
+    HitFuncName: string,
 
     UserData: {[string]: any},
 
@@ -78,6 +78,19 @@ export type Projectile = typeof(setmetatable({} :: {
     LastPosition: Vector3,
 
     Rotation: CFrame,
+
+    _Actor: Actor?,
 }, {} :: ProjectileImpl))
+
+export type ProjData = {
+	StartTime: number,
+	Origin: Vector3,
+	Position: Vector3,
+	LastPosition: Vector3,
+	Velocity: Vector3,
+	Gravity: Vector3,
+	RayParams: RaycastParams,
+	HitCalc: (self: ProjData) -> RaycastResult?,
+}
 
 return TypeHolder
