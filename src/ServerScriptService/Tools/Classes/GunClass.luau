@@ -23,8 +23,6 @@ type GunImpl = {
 }
 
 export type GunConfig = ToolClass.ToolConfig & {
-	DisplayName: string,
-
 	Damage: number,
 	FireRate: number,
 	ReloadTime: number,
@@ -45,6 +43,7 @@ export type GunObject = ToolClass.ToolObject & GunConfig & {
 		Shoot: (self: GunObject, origin: Vector3, direction: Vector3) -> (),
 		Reload: (self: GunObject) -> (),
 	},
+	Cooldowns: {},
 
 	OnShot: Signal.Signal<>,
 	OnReloading: Signal.Signal<>,

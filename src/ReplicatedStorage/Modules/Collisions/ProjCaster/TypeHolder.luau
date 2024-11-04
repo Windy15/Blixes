@@ -10,7 +10,7 @@ export type CalculateHit = (self: ProjCaster, proj: Projectile) -> RaycastResult
 
 export type ProjConfig = {
     RayParams: RaycastParams?,
-    DestroyOnHit: boolean,
+    DestroyOnHit: boolean?,
 
     Gravity: Vector3?,
 

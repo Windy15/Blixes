@@ -16,6 +16,7 @@ local ThreadsFolder = if RunService:IsServer() then ServerScriptService.ProjThre
 
 local PROJ_INIT_SIZE = 1000
 local THREAD_COUNT = 16
+local MAX_TIME_DIFF = 0.25 -- maximum time a projectile can travel in a frame
 
 local ProjIdGen = GenerationId.new(PROJ_INIT_SIZE)
 local GlobalProjectiles = table.create(PROJ_INIT_SIZE)
@@ -40,10 +41,15 @@ end
 RunService.PostSimulation:Wait() -- wait for actor scripts to load
 
 local function getAvailableActor()
-	table.sort(Actors, function(a, b)
-		return a:GetAttribute("Projs") < b:GetAttribute("Projs")
-	end)
-	return Actors[1]
+	local min, lowest = math.huge, Actors[1]
+	for _, actor in Actors do
+		local count = actor:GetAttribute("Projs") :: number
+		if count < min then
+			min = count
+			lowest = actor
+		end
+	end
+	return lowest
 end
 
 local function serializeProjectile(proj: TypeHolder.Projectile)
@@ -60,12 +66,18 @@ local function serializeProjectile(proj: TypeHolder.Projectile)
 	}
 end
 
+local LostTime = 0
+
+local function clock()
+	return os.clock() - LostTime
+end
+
 local Projectile = {} :: TypeHolder.ProjectileImpl
 Projectile.__index = Projectile
 Projectile.__type = "Projectile"
 
 function Projectile.new(caster, origin, velocity)
-    local timeCreated = os.clock()
+    local timeCreated = clock()
     local self = setmetatable({
         Caster = caster,
         TimeCreated = timeCreated,
@@ -96,27 +108,27 @@ function Projectile.new(caster, origin, velocity)
     return self
 end
 
-function Projectile.buffToId(buff: buffer)
+function Projectile.buffToId(buff)
     return buffer.readu16(buff, 0)
 end
 
-function Projectile.idToBuff(id: number)
+function Projectile.idToBuff(id)
     local buff = buffer.create(2)
     buffer.writeu16(buff, 0, id)
     return buff
 end
 
-function Projectile:ChangeVelocity(velocity: Vector3)
+function Projectile:ChangeVelocity(velocity)
     if self._TrajectoryStepped then -- if a new trajectory hasn't been simulated yet we don't need to create a new one
-		local startTime = os.clock()
+		local startTime = clock()
+		local origin = self.Position
 		self.TrajectoryList = {
-            Origin = self.Position,
+            Origin = origin,
 			StartTime = startTime,
             Next = self.TrajectoryList,
 		}
 		if self._Actor then
-			self._Actor:SendMessage("ProjUpdated", "Origin", self.Position)
-			self._Actor:SendMessage("ProjUpdated", "StartTime", startTime)
+			self._Actor:SendMessage("NewTrajectory", origin, startTime)
 		end
     end
 	self.Velocity = velocity
@@ -125,7 +137,7 @@ function Projectile:ChangeVelocity(velocity: Vector3)
 	end
 end
 
-function Projectile:ApplyImpulse(velocity: Vector3)
+function Projectile:ApplyImpulse(velocity)
     self:ChangeVelocity(self.Velocity + velocity)
 end
 
@@ -155,13 +167,21 @@ function Projectile:Destroy()
     self.Caster.OnProjDestroyed:Fire(self)
 end
 
+local lastTime = os.clock() -- deltaTime parameter in PreSimulation won't detecting freezing so deltaTime calculation needed
+
 RunService.PreSimulation:Connect(function()
+	local currentTime = os.clock()
+	local deltaTime = currentTime - lastTime
+	lastTime = currentTime
+	if deltaTime > MAX_TIME_DIFF then -- prevent projectiles teleporting far after lag spikes for better hit detection
+		LostTime += deltaTime - MAX_TIME_DIFF
+	end
 	for _, actor in Actors do
-		actor:SendMessage("Simulate")
+		actor:SendMessage("Simulate", clock())
 	end
 end)
 
-ProjGroupSimulated.Event:Connect(function(simulated: {[string]: Vector3}, hitGroup: {[string]: RaycastResult})
+local function finishSimulationGroup(simulated: {[string]: Vector3}, hits: {[string]: RaycastResult})
 	for id, newpos in simulated do
 		local proj = GlobalProjectiles[tonumber(id) :: number]
 		proj.LastPosition = proj.Position
@@ -169,13 +189,15 @@ ProjGroupSimulated.Event:Connect(function(simulated: {[string]: Vector3}, hitGro
 		proj._TrajectoryStepped = true
 		proj.Caster.OnProjMoved:Fire(proj, newpos)
 	end
-	for id, result in hitGroup do
+	for id, result in hits do
 		local proj = GlobalProjectiles[tonumber(id) :: number]
 		proj.Caster.OnProjHit:Fire(proj, result)
 		if proj.Caster.DestroyOnHit then
 			proj:Destroy()
 		end
 	end
-end)
+end
+
+ProjGroupSimulated.Event:Connect(finishSimulationGroup)
 
 return Projectile

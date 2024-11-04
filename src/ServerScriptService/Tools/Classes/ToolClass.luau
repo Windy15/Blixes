@@ -4,6 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local Cleaner = require(ReplicatedStorage.Modules.General.Cleaner)
+local Cooldown = require(ReplicatedStorage.Modules.General.Cooldown)
 local EnumState = require(ReplicatedStorage.Modules.General.EnumState)
 local GameEnums = require(ReplicatedStorage.GameEnums)
 local GlobalObjects = require(ServerScriptService.GlobalObjects)
@@ -33,7 +34,8 @@ export type ToolImpl = {
 }
 
 export type ToolConfig = {
-	
+	DisplayName: string,
+	ToolFolder: Folder,
 }
 
 export type ToolObject = ToolConfig & typeof(setmetatable({} :: {
@@ -44,6 +46,7 @@ export type ToolObject = ToolConfig & typeof(setmetatable({} :: {
 	ToolState: EnumState.EnumState,
 
 	Actions: {[string]: any},
+	Cooldowns: {[string]: Cooldown.Cooldown},
 
 	DisplayName: string,
 
@@ -72,6 +75,7 @@ function Tool.new(config: ToolConfig)
 	self.ToolState = EnumState.new(table.unpack(GameEnums.ToolState.OrderedItems))
 
 	self.Actions = {}
+	self.Cooldowns = {}
 
 	self.DisplayName = "Default Tool"
 
@@ -88,11 +92,7 @@ function Tool.new(config: ToolConfig)
 end
 
 function Tool:Init(config)
-	local toolFolder = ReplicatedStorage.Tools:FindFirstChild(self.ToolName, true)
-	if not toolFolder then
-		error(`'{self.ToolName}' is not a valid ToolName, or has no tool model`, 2)
-	end
-	local toolClone = toolFolder.Tool:Clone()
+	local toolClone: Tool = (self.ToolFolder :: any).Tool:Clone()
 
 	toolClone.Name = self.DisplayName
 

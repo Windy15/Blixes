@@ -31,12 +31,11 @@ local function main(actor: Actor)
 	end
 
 	@native
-	local function simulate()
+	local function simulate(currentTime: number)
 		local simulatedGroup = {}
 		local hits = {}
-		local newTime = os.clock()
 		for id, proj in Projectiles do
-			local newpos = calculatePosition(proj.Gravity, proj.Velocity, proj.Origin, newTime - proj.StartTime)
+			local newpos = calculatePosition(proj.Gravity, proj.Velocity, proj.Origin, currentTime - proj.StartTime)
 			proj.LastPosition = proj.Position
 			proj.Position = newpos
 			simulatedGroup[id] = newpos
@@ -48,17 +47,28 @@ local function main(actor: Actor)
 		ProjSimulated:Fire(simulatedGroup, hits)
 	end
 
-	actor:BindToMessageParallel("Simulate", simulate)
+	local function newTrajectory(id: number, origin: Vector3, startTime: number)
+		local proj = Projectiles[tostring(id)]
+		if proj then
+			proj.Origin = origin
+			proj.StartTime = startTime
+		end
+	end
 
-	actor:BindToMessage("ProjUpdated", function(id: number, key: string, val: any)
+	local function updateProj(id: number, key: string, val: any)
 		if Projectiles[tostring(id)] then
 			Projectiles[tostring(id)][key] = val
 		end
-	end)
+	end
 
-	actor:BindToMessage("ProjRemoved", function(id: number)
+	local function removeProj(id: number)
 		Projectiles[tostring(id)] = nil
-	end)
+	end
+
+	actor:BindToMessageParallel("Simulate", simulate)
+	actor:BindToMessage("NewTrajectory", newTrajectory)
+	actor:BindToMessage("ProjUpdated", updateProj)
+	actor:BindToMessage("ProjRemoved", removeProj)
 end
 
 return main

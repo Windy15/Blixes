@@ -7,6 +7,7 @@ local ClientScripts = client.PlayerScripts
 
 local ActionBinder = require(ClientScripts.Components.ActionBinder)
 local Cleaner = require(ReplicatedStorage.Modules.General.Cleaner)
+local Cooldown = require(ReplicatedStorage.Modules.General.Cooldown)
 local EnumState = require(ReplicatedStorage.Modules.General.EnumState)
 local GameEnums = require(ReplicatedStorage.GameEnums)
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
@@ -43,6 +44,7 @@ export type ToolObject = ToolConfig & typeof(setmetatable({} ::  {
 
 	Actions: {[string]: any},
 	Animations: {[string]: AnimationTrack},
+	Cooldowns: {[string]: Cooldown.Cooldown},
 
 	OnInitialized: Signal.Signal<>,
 	OnEquipped: Signal.Signal<>,
@@ -61,6 +63,7 @@ function Tool.new(config)
 
 	self.Actions = {}
 	self.Animations = {}
+	self.Cooldowns = {}
 
 	self.Cleaner = Cleaner.new()
 
