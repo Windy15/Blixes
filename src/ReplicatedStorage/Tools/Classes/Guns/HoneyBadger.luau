@@ -4,7 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ClientScripts = Players.LocalPlayer.PlayerScripts
 
 local GunClass = require(ReplicatedStorage.Tools.Classes.GunClass)
-local ProjCaster = require(ReplicatedStorage.Modules.Collisions.ProjCaster)
+local ProjCaster = require(ReplicatedStorage.Modules.Physics.ProjCaster)
 local ProjShooter = require(ClientScripts.Components.Shooters.ProjShooter)
 
 local Bullet = ReplicatedStorage.Visuals.Projectiles.Bullet
@@ -18,6 +18,7 @@ function HoneyBadger.new(config)
 
 	self.Shooter = ProjShooter.new(self, ProjCaster.new({
 		DestroyOnHit = true,
+		Tooltip = "the first ever",
 	}), Bullet)
 
 	if config then

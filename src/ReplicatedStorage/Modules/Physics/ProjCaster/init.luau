@@ -19,6 +19,7 @@ function ProjCaster.new(config: TypeHolder.ProjConfig)
         DestroyOnHit = config.DestroyOnHit or false,
 
         Gravity = config.Gravity or -workspace.Gravity * Vector3.yAxis,
+        Radius = config.Radius or 0,
 
         UserData = {},
 

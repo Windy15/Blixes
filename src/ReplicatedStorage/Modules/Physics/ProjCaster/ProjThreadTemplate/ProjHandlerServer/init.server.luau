@@ -1,6 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local ProjCaster = ReplicatedStorage.Modules.Collisions.ProjCaster
+local ProjCaster = ReplicatedStorage.Modules.Physics.ProjCaster
 
 local main = require(ProjCaster.ProjActorScript)
 

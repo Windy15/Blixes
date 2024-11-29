@@ -4,8 +4,8 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local PartCache = require(ReplicatedStorage.Modules.Parts.PartCache)
-local Projectile = require(ReplicatedStorage.Modules.Collisions.ProjCaster.Projectile)
-local Types = require(ReplicatedStorage.Modules.Collisions.ProjCaster.TypeHolder)
+local Projectile = require(ReplicatedStorage.Modules.Physics.ProjCaster.Projectile)
+local Types = require(ReplicatedStorage.Modules.Physics.ProjCaster.TypeHolder)
 
 local ProjectileRemotes = ReplicatedStorage.Remotes.Projectiles
 

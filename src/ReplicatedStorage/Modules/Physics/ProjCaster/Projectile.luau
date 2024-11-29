@@ -40,7 +40,7 @@ end
 
 RunService.PostSimulation:Wait() -- wait for actor scripts to load
 
-local function getAvailableActor()
+local function getAvailableActor() -- get the actor with the least amount of projs
 	local min, lowest = math.huge, Actors[1]
 	for _, actor in Actors do
 		local count = actor:GetAttribute("Projs") :: number
@@ -52,23 +52,26 @@ local function getAvailableActor()
 	return lowest
 end
 
-local function serializeProjectile(proj: TypeHolder.Projectile)
+local function serializeProjectile(proj: TypeHolder.Projectile): TypeHolder.ProjData
 	local rayParams = proj.Caster.RayParams
 	return {
 		Position = proj.Position,
 		LastPosition = proj.LastPosition,
 		StartTime = proj.TrajectoryList.StartTime,
 		Origin = proj.TrajectoryList.Origin,
+		InitVelocity = proj.TrajectoryList.InitVelocity,
 		Velocity = proj.Velocity,
+
 		Gravity = proj.Caster.Gravity,
+		Radius = proj.Caster.Radius,
 		RayParams = rayParams,
-		HitCalc = proj.Caster.HitFuncName,
+		HitCalc = proj.Caster.HitFuncName :: any, -- this has to be a string first so it can be passed into actors
 	}
 end
 
 local LostTime = 0
 
-local function clock()
+local function simClock()
 	return os.clock() - LostTime
 end
 
@@ -77,22 +80,29 @@ Projectile.__index = Projectile
 Projectile.__type = "Projectile"
 
 function Projectile.new(caster, origin, velocity)
-    local timeCreated = clock()
+    local timeCreated = simClock()
     local self = setmetatable({
         Caster = caster,
         TimeCreated = timeCreated,
 
         InitialOrigin = origin,
-        TrajectoryList = {Origin = origin, StartTime = timeCreated, Next = nil},
+        TrajectoryList = {
+			Origin = origin,
+			InitVelocity = velocity,
+			StartTime = timeCreated,
+			Next = nil
+		},
         _TrajectoryStepped = false, -- If the current trajectory has been used
 
-        Velocity = velocity,
         Position = origin,
         LastPosition = origin,
+		Velocity = velocity,
 
 		Rotation = CFrame.identity,
-		
+
 		HitCalc = "Default",
+
+		ExtraData = {},
 		_Actor = nil,
     }, Projectile)
 
@@ -118,22 +128,34 @@ function Projectile.idToBuff(id)
     return buff
 end
 
+function Projectile:UpdatePosition(pos)
+	self.LastPosition = self.Position
+	local lastPos = self.LastPosition
+	self.Position = pos
+	if self._Actor then
+		self._Actor:SendMessage("UpdatePosition", pos, lastPos)
+	end
+end
+
 function Projectile:ChangeVelocity(velocity)
-    if self._TrajectoryStepped then -- if a new trajectory hasn't been simulated yet we don't need to create a new one
-		local startTime = clock()
-		local origin = self.Position
+	local startTime = simClock()
+	local origin = self.Position
+	self.Velocity = velocity
+    if self._TrajectoryStepped then
 		self.TrajectoryList = {
             Origin = origin,
 			StartTime = startTime,
+			InitVelocity = velocity,
             Next = self.TrajectoryList,
 		}
-		if self._Actor then
-			self._Actor:SendMessage("NewTrajectory", origin, startTime)
-		end
+		self._TrajectoryStepped = false
+	else -- if a new trajectory hasn't been simulated yet we don't need to create another one
+		self.TrajectoryList.Origin = origin
+		self.TrajectoryList.StartTime = startTime
+		self.TrajectoryList.InitVelocity = velocity
     end
-	self.Velocity = velocity
 	if self._Actor then
-		self._Actor:SendMessage("ProjUpdated", "Velocity", velocity)
+		self._Actor:SendMessage("NewTrajectory", self.Id, origin, startTime, velocity)
 	end
 end
 
@@ -177,17 +199,23 @@ RunService.PreSimulation:Connect(function()
 		LostTime += deltaTime - MAX_TIME_DIFF
 	end
 	for _, actor in Actors do
-		actor:SendMessage("Simulate", clock())
+		actor:SendMessage("Simulate", simClock())
 	end
 end)
 
-local function finishSimulationGroup(simulated: {[string]: Vector3}, hits: {[string]: RaycastResult})
-	for id, newpos in simulated do
+type Simulation = {
+	Position: Vector3,
+	Velocity: Vector3,
+}
+
+local function reflectToMainThread(simulated: {[string]: Simulation}, hits: {[string]: RaycastResult})
+	for id, sim in simulated do
 		local proj = GlobalProjectiles[tonumber(id) :: number]
 		proj.LastPosition = proj.Position
-		proj.Position = newpos
+		proj.Position = sim.Position
+		proj.Velocity = sim.Velocity
 		proj._TrajectoryStepped = true
-		proj.Caster.OnProjMoved:Fire(proj, newpos)
+		proj.Caster.OnProjMoved:Fire(proj, sim.Position)	
 	end
 	for id, result in hits do
 		local proj = GlobalProjectiles[tonumber(id) :: number]
@@ -198,6 +226,6 @@ local function finishSimulationGroup(simulated: {[string]: Vector3}, hits: {[str
 	end
 end
 
-ProjGroupSimulated.Event:Connect(finishSimulationGroup)
+ProjGroupSimulated.Event:Connect(reflectToMainThread)
 
 return Projectile

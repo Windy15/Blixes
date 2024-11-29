@@ -240,11 +240,11 @@ function Signal:OrderFire(...)
 	end
 
 	local yield = self._YieldList
+	self._YieldList = nil
 
 	while yield do
 		coroutine.resume(yield._Callback :: thread, ...)
 		yield = yield._Next
-		self._YieldList = yield
 	end
 end
 

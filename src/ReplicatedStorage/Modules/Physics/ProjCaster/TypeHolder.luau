@@ -13,6 +13,8 @@ export type ProjConfig = {
     DestroyOnHit: boolean?,
 
     Gravity: Vector3?,
+    Radius: number?,
+    Ricochet: boolean?,
 
     HitFuncName: string?,
 
@@ -32,6 +34,7 @@ export type ProjCaster = typeof(setmetatable({} :: {
     DestroyOnHit: boolean,
 
     Gravity: Vector3,
+    Radius: number,
 
     HitFuncName: string,
 
@@ -51,6 +54,8 @@ export type ProjectileImpl = {
     buffToId: (buff: buffer) -> number,
     idToBuff: (id: number) -> buffer,
 
+    SetValue: (self: Projectile, key: string, value: any) -> (),
+    UpdatePosition: (self: Projectile, pos: Vector3) -> (),
     ChangeVelocity: (self: Projectile, velocity: Vector3) -> (),
     ApplyImpulse: (self: Projectile, velocity: Vector3) -> (),
     GetPivot: (self: Projectile) -> CFrame,
@@ -60,6 +65,7 @@ export type ProjectileImpl = {
 
 export type Trajectory = {
     Origin: Vector3,
+    InitVelocity: Vector3,
     StartTime: number,
     Next: Trajectory?,
 }
@@ -73,11 +79,13 @@ export type Projectile = typeof(setmetatable({} :: {
     TrajectoryList: Trajectory,
     _TrajectoryStepped: boolean,
 
-    Velocity: Vector3,
     Position: Vector3,
     LastPosition: Vector3,
+    Velocity: Vector3,
 
     Rotation: CFrame,
+
+    ExtraData: {[string]: any},
 
     _Actor: Actor?,
 }, {} :: ProjectileImpl))
@@ -87,8 +95,11 @@ export type ProjData = {
 	Origin: Vector3,
 	Position: Vector3,
 	LastPosition: Vector3,
-	Velocity: Vector3,
+	InitVelocity: Vector3,
+    Velocity: Vector3,
 	Gravity: Vector3,
+
+    Radius: number,
 	RayParams: RaycastParams,
 	HitCalc: (self: ProjData) -> RaycastResult?,
 }

@@ -35,6 +35,7 @@ type ToolImpl = {
 
 export type ToolConfig = {
 	ToolName: string,
+	Tooltip: string,
 	Instance: Tool,
 }
 

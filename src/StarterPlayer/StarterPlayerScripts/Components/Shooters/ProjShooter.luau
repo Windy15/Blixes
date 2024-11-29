@@ -5,7 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
 local Types = require(ReplicatedStorage.Components.Types)
-local ProjTypes = require(ReplicatedStorage.Modules.Collisions.ProjCaster.TypeHolder)
+local ProjTypes = require(ReplicatedStorage.Modules.Physics.ProjCaster.TypeHolder)
 
 local ProjectileRender = require(Players.LocalPlayer.PlayerScripts.RenderHandlers.ProjectileRender)
 

@@ -6,7 +6,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local EnumState = require(ReplicatedStorage.Modules.General.EnumState)
 local GameEnums = require(ReplicatedStorage.GameEnums)
 local GunClass = require(ServerScriptService.Tools.Classes.GunClass)
-local ProjCaster = require(ReplicatedStorage.Modules.Collisions.ProjCaster)
+local ProjCaster = require(ReplicatedStorage.Modules.Physics.ProjCaster)
 local ProjShooter = require(ServerScriptService.Components.Shooters.ProjShooter)
 
 local ToolFolder = ReplicatedStorage.Tools.Models.Guns.HoneyBadger

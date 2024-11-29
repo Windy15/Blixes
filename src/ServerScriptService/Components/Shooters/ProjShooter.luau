@@ -6,8 +6,8 @@ local ServerScriptService = game:GetService("ServerScriptService")
 
 local Signal = require(ReplicatedStorage.Modules.General.Signal)
 local Types = require(ServerScriptService.Components.Types)
-local ProjTypes = require(ReplicatedStorage.Modules.Collisions.ProjCaster.TypeHolder)
-local Projectile = require(ReplicatedStorage.Modules.Collisions.ProjCaster.Projectile)
+local ProjTypes = require(ReplicatedStorage.Modules.Physics.ProjCaster.TypeHolder)
+local Projectile = require(ReplicatedStorage.Modules.Physics.ProjCaster.Projectile)
 
 local CreateProjectileRemote = ReplicatedStorage.Remotes.Projectiles.CreateProjectile
 local UpdatePositionRemote = ReplicatedStorage.Remotes.Projectiles.UpdatePosition
